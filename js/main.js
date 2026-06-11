@@ -37,20 +37,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
  
-@@ -23,2 +23,16 @@
- 
-+  document.querySelectorAll("form.form").forEach((form) => {
-+    const status = form.querySelector("[data-form-status]");
-+
-+    form.addEventListener("submit", (event) => {
-+      event.preventDefault();
-+
-+      if (status) {
-+        status.textContent = "Mesajınız demo olarak alındı. Gerçek gönderim için backend bağlamak gerekir.";
-+      }
-+
-+      form.reset();
-+    });
-+  });
-+
+  document.querySelectorAll("form.form").forEach((form) => {
+    const status = form.querySelector("[data-form-status]");
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      if (status) {
+        status.textContent = "Mesajınız demo olarak alındı. Gerçek gönderim için backend bağlamak gerekir.";
+      }
+      form.reset();
+    });
+  });
+
    const currentPath = window.location.pathname.split("/").pop() || "index.html";

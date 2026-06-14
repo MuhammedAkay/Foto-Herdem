@@ -67,7 +67,7 @@ select {
 }
 
 .site-header .container {
-  width: min(100% - 18px, var(--container));
+  width: min(100% - 12px, var(--container));
 }
 
 .nav {
@@ -76,7 +76,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .brand {
@@ -203,13 +203,13 @@ select {
 
 .hero-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.72fr);
-  gap: 72px;
+  grid-template-columns: minmax(0, 1.22fr) minmax(300px, 0.62fr);
+  gap: 88px;
   padding: 84px 0 92px;
 }
 
 .hero-copy {
-  max-width: 560px;
+  max-width: 500px;
   min-width: 0;
 }
 
@@ -308,7 +308,7 @@ select {
 .hero-card {
   align-self: end;
   width: 100%;
-  max-width: 480px;
+  max-width: 420px;
   min-width: 0;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -322,7 +322,7 @@ select {
 
 .hero-card img {
   width: 100%;
-  height: 270px;
+  height: 250px;
   object-fit: cover;
   border-radius: 20px;
 }
@@ -336,7 +336,7 @@ select {
 }
 
 .hero-card-grid img {
-  height: 78px;
+  height: 72px;
 }
 
 .stats {

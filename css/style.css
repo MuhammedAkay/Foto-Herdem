@@ -12,8 +12,8 @@
   --radius: 24px;
   --radius-sm: 16px;
   --container: 1140px;
-  --hero-bg: url("../assets/dis-cekim-1.jpg");
-  --hero-bg-mobile: url("../assets/dis-cekim-1.jpg");
+  --hero-bg: url("../assets/hero-bg.jpg");
+  --hero-bg-mobile: url("../assets/hero-bg.jpg");
 }
 
 * {
@@ -200,7 +200,7 @@ select {
 .hero-inner {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 36px;
+  gap: 52px;
   padding: 84px 0 92px;
 }
 
@@ -317,7 +317,7 @@ select {
 
 .hero-card img {
   width: 100%;
-  height: 320px;
+  height: 300px;
   object-fit: cover;
   border-radius: 20px;
 }
@@ -529,12 +529,29 @@ main {
   box-shadow: var(--shadow);
 }
 
-.gallery-item.tall {
-  min-height: 380px;
+.gallery-item.featured {
+  grid-column: 1 / -1;
+  min-height: 420px;
 }
 
 .gallery-item.wide {
   grid-column: span 8;
+}
+
+.gallery-item.half {
+  grid-column: span 6;
+  min-height: 300px;
+}
+
+.gallery-grid > .gallery-item:nth-child(2),
+.gallery-grid > .gallery-item:nth-child(3),
+.gallery-grid > .gallery-item:nth-child(4) {
+  grid-column: span 4;
+}
+
+.gallery-grid > .gallery-item:nth-child(5),
+.gallery-grid > .gallery-item:nth-child(6) {
+  grid-column: span 6;
 }
 
 .gallery-item img {
@@ -984,7 +1001,9 @@ main {
   }
 
   .gallery-item,
-  .gallery-item.wide {
+  .gallery-item.wide,
+  .gallery-item.featured,
+  .gallery-item.half {
     grid-column: span 12;
   }
 
@@ -1133,11 +1152,120 @@ main {
   }
 
   .gallery-item {
-    min-height: 220px;
+    min-height: 0;
   }
 
-  .gallery-item.tall {
-    min-height: 260px;
+  .gallery-item.featured,
+  .gallery-item.wide,
+  .gallery-item.half {
+    min-height: 0;
+  }
+
+  .gallery-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .gallery-grid > .gallery-item,
+  .gallery-grid > .gallery-item.featured,
+  .gallery-grid > .gallery-item.wide,
+  .gallery-grid > .gallery-item.half {
+    grid-column: 1 / -1 !important;
+    width: min(100%, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    min-width: 0 !important;
+    justify-self: center;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(n) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .gallery-grid .gallery-item,
+  .gallery-grid .gallery-item.featured,
+  .gallery-grid .gallery-item.wide,
+  .gallery-grid .gallery-item.half {
+    width: min(100%, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    min-width: 0 !important;
+    height: 300px !important;
+    box-sizing: border-box;
+  }
+
+  .gallery-grid .gallery-item.featured {
+    height: 380px !important;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(1) {
+    height: 380px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(2) {
+    height: 330px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(3) {
+    height: 350px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(4) {
+    height: 340px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(5) {
+    height: 330px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(6) {
+    height: 360px !important;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(1) img {
+    object-position: 50% 30%;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(2) img {
+    object-position: 55% 28%;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(3) img {
+    object-position: 50% 18%;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(4) img {
+    object-position: 50% 25%;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(5) img {
+    object-position: 50% 30%;
+  }
+
+  .gallery-grid > .gallery-item:nth-child(6) img {
+    object-position: 50% 20%;
+  }
+
+  .overlay {
+    padding: 16px;
+  }
+
+  .overlay strong {
+    font-size: 0.92rem;
+  }
+
+  .overlay span {
+    font-size: 0.8rem;
+    line-height: 1.35;
   }
 
   .timeline-item {

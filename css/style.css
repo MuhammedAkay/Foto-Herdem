@@ -957,6 +957,41 @@ main {
   color: var(--muted);
 }
 
+@media (min-width: 961px) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    gap: 120px;
+  }
+
+  .hero-copy {
+    max-width: 420px;
+    justify-self: start;
+    margin-left: 0;
+  }
+
+  .hero-copy .eyebrow,
+  .hero-copy h1,
+  .hero-copy p,
+  .hero-copy .hero-actions,
+  .hero-copy .stats {
+    margin-left: 0;
+  }
+
+  .hero-card {
+    max-width: 920px;
+    justify-self: end;
+    margin-left: auto;
+  }
+
+  .hero-card img {
+    height: 520px;
+  }
+
+  .hero-card-grid img {
+    height: 180px;
+  }
+}
+
 .page-hero {
   padding: 84px 0 56px;
   color: #fff;

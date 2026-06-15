@@ -209,13 +209,13 @@ select {
 
 .hero-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(480px, 1.08fr);
+  gap: 84px;
   padding: 84px 0 92px;
 }
 
 .hero-copy {
-  max-width: 460px;
+  max-width: 420px;
   min-width: 0;
 }
 
@@ -314,7 +314,7 @@ select {
 .hero-card {
   align-self: start;
   width: 100%;
-  max-width: 700px;
+  max-width: 760px;
   min-width: 0;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -329,7 +329,7 @@ select {
 
 .hero-card img {
   width: 100%;
-  height: 390px;
+  height: 430px;
   object-fit: cover;
   border-radius: 20px;
 }
@@ -343,7 +343,7 @@ select {
 }
 
 .hero-card-grid img {
-  height: 130px;
+  height: 148px;
 }
 
 .stats {

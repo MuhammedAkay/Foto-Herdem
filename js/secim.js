@@ -26,6 +26,7 @@
     expired: "Bu seçim linkinin süresi dolmuş. Lütfen Foto Herdem ile iletişime geçin.",
     revoked: "Bu seçim linki iptal edilmiş. Lütfen Foto Herdem ile iletişime geçin.",
     too_few: "Seçtiğiniz fotoğraf sayısı yetersiz. En az gerekli sayıda fotoğraf seçmelisiniz.",
+    contact_required: "Gelin/Damat ismi ve telefon numarası zorunludur.",
   };
 
   function fmtDate(value) {
@@ -382,16 +383,26 @@
       return;
     }
 
+    const contactForm = $("#secim-contact-form");
+    const contactName = contactForm.elements.contact_name.value.trim();
+    const contactPhone = contactForm.elements.contact_phone.value.trim();
+    const note = contactForm.elements.note.value.trim() || null;
+
+    if (!contactName || !contactPhone) {
+      toast("Gelin/Damat ismi ve telefon numarası zorunludur.");
+      contactForm.elements.contact_name.focus();
+      return;
+    }
+
     state.submitted = true;
     updateCounter();
 
-    const contactForm = $("#secim-contact-form");
     const payload = {
       p_session_id: state.session.session_id,
       p_photo_ids: Array.from(state.selected.keys()),
-      p_contact_name: contactForm.elements.contact_name.value.trim() || null,
-      p_contact_phone: contactForm.elements.contact_phone.value.trim() || null,
-      p_note: contactForm.elements.note.value.trim() || null,
+      p_contact_name: contactName,
+      p_contact_phone: contactPhone,
+      p_note: note,
     };
 
     try {
@@ -405,10 +416,48 @@
         return;
       }
       showSuccess(`Seçtiğiniz ${result.count} fotoğraf kaydedildi. Foto Herdem ekibi en kısa sürede sizinle iletişime geçecek.`);
+      sendAdminNotification({
+        code: state.session.code,
+        albumTitle: state.session.album_title,
+        contactName,
+        contactPhone,
+        note,
+        photoNames: Array.from(state.selected.keys()),
+      });
     } catch (err) {
       state.submitted = false;
       updateCounter();
       showMessage("Gönderim Hatası", `Bağlantı hatası oluştu: ${err.message}. Lütfen tekrar deneyin.`);
+    }
+  }
+
+  async function sendAdminNotification(info) {
+    try {
+      const emailRes = await state.supabase.rpc("admin_get_email");
+      const adminEmail =
+        typeof emailRes?.data === "string"
+          ? emailRes.data
+          : typeof emailRes === "string"
+            ? emailRes
+            : "";
+      if (!adminEmail) return;
+
+      await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          _subject: `📷 Fotoğraf Seçimi — ${info.albumTitle}`,
+          "Seçim Kodu": info.code,
+          "Albüm": info.albumTitle,
+          "Gelin / Damat": info.contactName,
+          "Telefon": info.contactPhone,
+          "Not": info.note || "—",
+          "Seçilen Fotoğraf Sayısı": String(info.photoNames.length),
+          "Seçilen Fotoğraflar": info.photoNames.join("\n"),
+        }),
+      });
+    } catch (_) {
+      // Bildirim gönderilemese bile seçim zaten kaydedilmiştir.
     }
   }
 

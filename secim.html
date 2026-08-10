@@ -58,36 +58,65 @@
           <div class="eyebrow">Albüm</div>
           <h1 id="secim-album-title"></h1>
           <p class="secim-hint" id="secim-album-info"></p>
-          <p class="secim-hint secim-min-hint" id="secim-min-hint" hidden></p>
         </div>
         <div class="secim-counter">
           <div class="secim-counter-count">
             <strong id="secim-count">0</strong><span>/</span><span id="secim-min">0</span><span id="secim-dash">–</span><span id="secim-max">0</span>
           </div>
-          <button class="btn btn-primary" id="secim-submit" type="button" disabled>Seçimimi Gönder</button>
+          <div class="secim-steps" aria-label="Adımlar">
+            <span class="secim-step-dot is-active" id="secim-dot-1">1</span>
+            <span class="secim-step-line"></span>
+            <span class="secim-step-dot" id="secim-dot-2">2</span>
+          </div>
         </div>
       </div>
 
-      <div class="secim-contact panel" hidden>
-        <form class="form" id="secim-contact-form">
-          <div class="secim-contact-grid">
-            <div class="field">
-              <label for="secim-name">Ad Soyad <span class="secim-optional">(opsiyonel)</span></label>
-              <input id="secim-name" name="contact_name" autocomplete="name">
-            </div>
-            <div class="field">
-              <label for="secim-phone">Telefon <span class="secim-optional">(opsiyonel)</span></label>
-              <input id="secim-phone" name="contact_phone" type="tel" autocomplete="tel">
-            </div>
+      <div class="secim-step" id="secim-step-1">
+        <div class="secim-step-head">
+          <span class="secim-step-num">1</span>
+          <div>
+            <h2>Fotoğraflarınızı Seçin</h2>
+            <p class="secim-hint">Beğendiğiniz fotoğraflara tıklayarak seçin.</p>
+            <p class="secim-hint secim-min-hint" id="secim-min-hint" hidden></p>
           </div>
-          <div class="field">
-            <label for="secim-note">Not <span class="secim-optional">(opsiyonel)</span></label>
-            <textarea id="secim-note" name="note" rows="2"></textarea>
-          </div>
-        </form>
+        </div>
+        <div class="secim-gallery" id="secim-gallery"></div>
+        <div class="secim-step-actions">
+          <button class="btn btn-primary" id="secim-next" type="button" disabled>Devam Et</button>
+        </div>
       </div>
 
-      <div class="secim-gallery" id="secim-gallery"></div>
+      <div class="secim-step" id="secim-step-2" hidden>
+        <div class="secim-step-head">
+          <span class="secim-step-num">2</span>
+          <div>
+            <h2>Bilgilerinizi Girin</h2>
+            <p class="secim-hint" id="secim-step2-info"></p>
+          </div>
+        </div>
+        <div class="secim-contact panel">
+          <form class="form" id="secim-contact-form" novalidate>
+            <div class="secim-contact-grid">
+              <div class="field">
+                <label for="secim-name">Gelin / Damat İsmi <span class="required-mark">*</span></label>
+                <input id="secim-name" name="contact_name" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="secim-phone">Telefon <span class="required-mark">*</span></label>
+                <input id="secim-phone" name="contact_phone" type="tel" autocomplete="tel" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="secim-note">Not <span class="secim-optional">(opsiyonel)</span></label>
+              <textarea id="secim-note" name="note" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="secim-step-actions secim-step-actions-split">
+          <button class="btn btn-secondary" id="secim-back" type="button">← Geri Dön</button>
+          <button class="btn btn-primary" id="secim-submit" type="button">Seçimimi Gönder</button>
+        </div>
+      </div>
     </section>
 
     <section class="panel secim-card secim-message" id="secim-success" hidden>

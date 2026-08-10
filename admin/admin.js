@@ -329,7 +329,12 @@
         const thumbs = (sel.photo_ids || [])
           .map((photo) => {
             const url = state.photoUrl.get(photo) || `../Albümler/${encodeURI(photo)}`;
-            return `<img src="${url}" alt="" loading="lazy">`;
+            const fileName = photo.split("/").pop();
+            return `
+              <figure class="selection-thumb">
+                <img src="${url}" alt="" loading="lazy">
+                <figcaption title="${escapeAttr(photo)}">${escapeHtml(fileName)}</figcaption>
+              </figure>`;
           })
           .join("");
         const contact = [sel.contact_name, sel.contact_phone].filter(Boolean).join(" · ");
@@ -466,10 +471,36 @@
       }
       $("#admin-who").textContent = me.display_name || me.username;
       show("dashboard");
-      await Promise.all([loadAlbums(), loadSessions()]);
+      await Promise.all([loadAlbums(), loadSessions(), loadAdminEmail()]);
     } catch (_) {
       localStorage.removeItem(TOKEN_KEY);
       show("login");
+    }
+  }
+
+  async function loadAdminEmail() {
+    const input = $("#admin-email");
+    if (!input) return;
+    try {
+      const data = await rpc("admin_get_email");
+      input.value = data || "";
+    } catch (_) {
+      input.value = "";
+    }
+  }
+
+  async function saveEmail(form) {
+    const email = form.elements.admin_email.value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus(form, "Geçerli bir e-posta adresi girin.", true);
+      return;
+    }
+    setStatus(form, "Kaydediliyor…");
+    try {
+      await rpc("admin_set_email", { p_token: token(), p_email: email });
+      setStatus(form, "Bildirim e-postası kaydedildi ✓");
+    } catch (err) {
+      setStatus(form, `Hata: ${err.message}`, true);
     }
   }
 
@@ -548,6 +579,11 @@
     $("#password-form").addEventListener("submit", (e) => {
       e.preventDefault();
       changePassword(e.currentTarget);
+    });
+
+    $("#email-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      saveEmail(e.currentTarget);
     });
 
     $("#admin-form").addEventListener("submit", (e) => {

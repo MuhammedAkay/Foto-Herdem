@@ -1,4 +1,6 @@
 User-agent: *
-Allow: /
+Disallow: /admin/
+Disallow: /secim.html
+Disallow: /Albümler/
 
-Sitemap: https://fotoherdem.netlify.app/sitemap.xml
+Sitemap: https://fotoherdem.com/sitemap.xml

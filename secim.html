@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Fotoğraf Seçimi | Foto Herdem</title>
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/secim.css">
+</head>
+<body class="secim-body" data-protection="0">
+  <header class="secim-topbar">
+    <div class="container secim-topbar-inner">
+      <a class="brand" href="index.html" aria-label="Foto Herdem ana sayfa">
+        <img class="brand-logo" src="assets/logo.png" alt="" aria-hidden="true">
+        <span>Foto Herdem <em class="secim-badge">Fotoğraf Seçimi</em></span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container secim-main">
+
+    <section class="panel secim-card" id="secim-login">
+      <div class="secim-card-inner">
+        <h1>Fotoğraf Seçimi</h1>
+        <p class="secim-hint">
+          Size iletilen seçim kodu ve şifreyle giriş yapın. Albümünüzden beğendiğiniz
+          fotoğrafları seçip tek seferde gönderebilirsiniz.
+        </p>
+        <form class="form" id="secim-login-form" novalidate>
+          <div class="field">
+            <label for="secim-code">Seçim Kodu</label>
+            <input id="secim-code" name="code" autocomplete="off" required>
+          </div>
+          <div class="field">
+            <label for="secim-password">Şifre</label>
+            <input id="secim-password" name="password" type="password" autocomplete="off" required>
+          </div>
+          <div class="form-status" data-status></div>
+          <button class="btn btn-primary" type="submit">Giriş Yap</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel secim-card secim-message" id="secim-message" hidden>
+      <div class="secim-card-inner">
+        <div class="secim-msg-icon">⚠️</div>
+        <h1 id="secim-msg-title"></h1>
+        <p class="secim-hint" id="secim-msg-text"></p>
+        <a class="btn btn-secondary" href="secim.html">Başka Kodla Giriş</a>
+      </div>
+    </section>
+
+    <section id="secim-picker" hidden>
+      <div class="panel secim-head">
+        <div class="secim-head-copy">
+          <div class="eyebrow">Albüm</div>
+          <h1 id="secim-album-title"></h1>
+          <p class="secim-hint" id="secim-album-info"></p>
+        </div>
+        <div class="secim-counter">
+          <div class="secim-counter-count">
+            <strong id="secim-count">0</strong><span>/</span><span id="secim-max">0</span>
+          </div>
+          <button class="btn btn-primary" id="secim-submit" type="button" disabled>Seçimimi Gönder</button>
+        </div>
+      </div>
+
+      <div class="secim-contact panel" hidden>
+        <form class="form" id="secim-contact-form">
+          <div class="secim-contact-grid">
+            <div class="field">
+              <label for="secim-name">Ad Soyad <span class="secim-optional">(opsiyonel)</span></label>
+              <input id="secim-name" name="contact_name" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="secim-phone">Telefon <span class="secim-optional">(opsiyonel)</span></label>
+              <input id="secim-phone" name="contact_phone" type="tel" autocomplete="tel">
+            </div>
+          </div>
+          <div class="field">
+            <label for="secim-note">Not <span class="secim-optional">(opsiyonel)</span></label>
+            <textarea id="secim-note" name="note" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+
+      <div class="secim-gallery" id="secim-gallery"></div>
+    </section>
+
+    <section class="panel secim-card secim-message" id="secim-success" hidden>
+      <div class="secim-card-inner">
+        <div class="secim-msg-icon secim-msg-ok">✓</div>
+        <h1>Seçiminiz Alındı 🎉</h1>
+        <p class="secim-hint" id="secim-success-text"></p>
+        <a class="btn btn-primary" href="index.html">Foto Herdem Ana Sayfa</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>© <span data-year></span> Foto Herdem</div>
+      <div class="footer-links">
+        <a href="index.html">Ana Sayfa</a>
+        <a href="sayfalar/iletisim.html">İletişim</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/secim.js"></script>
+</body>
+</html>

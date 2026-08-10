@@ -1,0 +1,11 @@
+# Netlify build: her deploy'da Albümler/fotoğraflar klasörünü tarar
+# ve Albümler/albums.json manifestini yeniden üretir.
+[build]
+  command = "node scripts/build-albums.js"
+  publish = "."
+
+# /admin adresi doğrudan admin panelini açsın
+[[redirects]]
+  from = "/admin"
+  to = "/admin/admin.html"
+  status = 200

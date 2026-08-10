@@ -13,6 +13,7 @@
     album: null,
     selected: new Map(), // photoPath -> sıra
     maxSelections: 10,
+    minSelections: 0,
     photoUrl: new Map(),
     lightboxIndex: 0,
     submitted: false,
@@ -24,6 +25,7 @@
     already_used: "Bu kodla daha önce seçim yapılmış. Tek kullanımlık linkler yalnızca bir kez kullanılabilir.",
     expired: "Bu seçim linkinin süresi dolmuş. Lütfen Foto Herdem ile iletişime geçin.",
     revoked: "Bu seçim linki iptal edilmiş. Lütfen Foto Herdem ile iletişime geçin.",
+    too_few: "Seçtiğiniz fotoğraf sayısı yetersiz. En az gerekli sayıda fotoğraf seçmelisiniz.",
   };
 
   function fmtDate(value) {
@@ -75,8 +77,22 @@
 
   function updateCounter() {
     const count = state.selected.size;
+    const min = state.minSelections || 0;
+
     $("#secim-count").textContent = String(count);
-    $("#secim-submit").disabled = count === 0 || state.submitted;
+    $("#secim-min").textContent = String(min);
+    const showMin = min > 0;
+    $("#secim-min").style.display = showMin ? "" : "none";
+    $("#secim-dash").style.display = showMin ? "" : "none";
+
+    const minHint = $("#secim-min-hint");
+    const needMore = count > 0 && count < min;
+    if (minHint) {
+      minHint.hidden = !needMore;
+      minHint.textContent = needMore ? `En az ${min} fotoğraf seçmelisiniz.` : "";
+    }
+
+    $("#secim-submit").disabled = count === 0 || count < min || state.submitted;
     $("#secim-submit").textContent = state.submitted ? "Gönderiliyor…" : "Seçimimi Gönder";
   }
 
@@ -294,12 +310,18 @@
   function enterPicker(session) {
     state.session = session;
     state.maxSelections = session.max_selections;
+    state.minSelections = session.min_selections || 0;
 
     $("#secim-album-title").textContent = session.album_title;
+    const limitText =
+      state.minSelections > 0
+        ? `en az ${state.minSelections}, en fazla ${session.max_selections} fotoğraf`
+        : `${session.max_selections} fotoğraf`;
     $("#secim-album-info").textContent =
-      `${state.album.photoCount} fotoğraf arasından ${session.max_selections} tanesini seçebilirsiniz.` +
+      `${state.album.photoCount} fotoğraf arasından ${limitText} seçebilirsiniz.` +
       fmtDate(session.expires_at);
 
+    $("#secim-min").textContent = String(state.minSelections);
     $("#secim-max").textContent = String(session.max_selections);
     $("#secim-login").hidden = true;
     $("#secim-message").hidden = true;
@@ -355,6 +377,10 @@
 
   async function submitSelection() {
     if (state.submitted || state.selected.size === 0) return;
+    if (state.selected.size < state.minSelections) {
+      toast(`En az ${state.minSelections} fotoğraf seçmelisiniz.`);
+      return;
+    }
 
     state.submitted = true;
     updateCounter();

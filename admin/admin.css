@@ -60,15 +60,17 @@
   border-color: rgba(180, 70, 60, 0.28);
 }
 
-/* PANELLER ARASINDAKİ BOŞLUK (Masaüstü için gap: 72px yapıldı) */
 .admin-main {
   padding: 44px 0 72px;
-  display: grid;
-  gap: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px !important;
 }
 
+/* Kartların altına ve üstüne ekstra doğrudan boşluk verildi */
 .admin-panel {
   padding: 28px;
+  margin-bottom: 40px !important;
 }
 
 .admin-panel-head {
@@ -449,10 +451,13 @@
   font-size: 1.05rem;
 }
 
-/* MOBİL GÖRÜNÜM (Gap 40px -> 60px yapıldı) */
 @media (max-width: 860px) {
   .admin-main {
-    gap: 60px;
+    gap: 70px !important;
+  }
+
+  .admin-panel {
+    margin-bottom: 50px !important;
   }
 
   .admin-session {
@@ -468,4 +473,3 @@
     grid-template-columns: 1fr;
   }
 }
-

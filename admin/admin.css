@@ -67,6 +67,7 @@
   gap: 80px !important;
 }
 
+/* Kartların altına ve üstüne ekstra doğrudan boşluk verildi */
 .admin-panel {
   padding: 28px;
   margin-bottom: 40px !important;
@@ -423,12 +424,30 @@
   gap: 10px;
 }
 
-.selection-grid img {
+.selection-thumb img {
   width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  background: rgba(53, 35, 26, 0.05);
   border-radius: 12px;
   border: 1px solid rgba(71, 54, 43, 0.12);
+}
+
+.selection-thumb {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.selection-thumb figcaption {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.admin-email-form {
+  max-width: 640px;
 }
 
 .empty-state {

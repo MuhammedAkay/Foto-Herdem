@@ -170,6 +170,8 @@
     $("#create-password").value = "";
     const max = $("#create-max");
     max.value = album.photoCount < 10 ? String(album.photoCount) : "10";
+    const min = $("#create-min");
+    min.value = "1";
     const radio = $(`#protection-radios input[value="2"]`);
     if (radio) radio.checked = true;
     $("#create-panel").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -185,6 +187,7 @@
 
     const password = form.elements.password.value.trim();
     const maxSelections = parseInt(form.elements.max_selections.value, 10);
+    const minSelections = parseInt(form.elements.min_selections.value, 10);
     const protectionLevel = parseInt(form.elements.protection_level.value, 10);
     const expiresRaw = form.elements.expires_at.value;
 
@@ -196,6 +199,14 @@
       setStatus(form, "Geçerli bir fotoğraf sayısı girin (1-500).", true);
       return;
     }
+    if (!Number.isInteger(minSelections) || minSelections < 0 || minSelections > 500) {
+      setStatus(form, "Geçerli bir en az seçim sayısı girin (0-500).", true);
+      return;
+    }
+    if (minSelections > maxSelections) {
+      setStatus(form, "En az seçim sayısı, en fazla seçim sayısından büyük olamaz.", true);
+      return;
+    }
 
     setStatus(form, "Oluşturuluyor…");
     try {
@@ -205,6 +216,7 @@
         p_album_title: album.title,
         p_password: password,
         p_max_selections: maxSelections,
+        p_min_selections: minSelections,
         p_protection_level: protectionLevel,
         p_expires_at: expiresRaw ? new Date(expiresRaw).toISOString() : null,
       });
@@ -259,13 +271,17 @@
         const protection = PROTECTION_LABELS[s.protection_level] || "";
         const link = selectionLink(s.code, "");
         const hasSelections = (s.selection_count || 0) > 0;
+        const rangeTag =
+          s.min_selections > 0
+            ? `${s.min_selections}–${s.max_selections} seçim`
+            : `${s.max_selections} seçim`;
         return `
           <article class="admin-session" data-session-id="${escapeAttr(s.id)}">
             <div class="admin-session-info">
               <h3>${escapeHtml(s.album_title)}</h3>
               <div class="admin-session-meta">
                 <span class="tag">Kod: ${escapeHtml(s.code)}</span>
-                <span class="tag">${s.max_selections} seçim</span>
+                <span class="tag">${rangeTag}</span>
                 <span class="tag">${escapeHtml(protection)}</span>
                 <span class="status-badge ${st.cls}">${st.text}</span>
               </div>

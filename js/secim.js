@@ -412,7 +412,11 @@
         const err = result?.error || "not_found";
         state.submitted = false;
         updateCounter();
-        showMessage("Seçim Kaydedilemedi", MESSAGES[err] || "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.");
+        const detail =
+          typeof err === "string"
+            ? MESSAGES[err] || err
+            : err?.message || err?.hint || "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.";
+        showMessage("Seçim Kaydedilemedi", detail);
         return;
       }
       showSuccess(`Seçtiğiniz ${result.count} fotoğraf kaydedildi. Foto Herdem ekibi en kısa sürede sizinle iletişime geçecek.`);

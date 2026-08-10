@@ -87,7 +87,7 @@ create or replace function public.admin_valid(p_token uuid)
 returns boolean
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select exists (
     select 1 from public.admin_sessions s
@@ -123,7 +123,7 @@ create or replace function public.admin_login(p_username text, p_password text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_admin public.admins%rowtype;
@@ -152,7 +152,7 @@ create or replace function public.admin_me(p_token uuid)
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select jsonb_build_object(
     'username', a.username,
@@ -167,7 +167,7 @@ create or replace function public.admin_logout(p_token uuid)
 returns void
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   delete from public.admin_sessions where token = p_token;
 $$;
@@ -177,7 +177,7 @@ create or replace function public.admin_change_password(p_token uuid, p_old_pass
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_admin_id uuid;
@@ -218,7 +218,7 @@ create or replace function public.admin_create_admin(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_admin_id uuid;
@@ -265,7 +265,7 @@ create or replace function public.admin_create_session(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_code text;
@@ -320,7 +320,7 @@ create or replace function public.admin_list_sessions(p_token uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_result jsonb;
@@ -354,7 +354,7 @@ create or replace function public.admin_get_selections(p_token uuid, p_session_i
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_result jsonb;
@@ -388,7 +388,7 @@ create or replace function public.admin_revoke_session(p_token uuid, p_session_i
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 begin
   if not public.admin_valid(p_token) then
@@ -410,7 +410,7 @@ create or replace function public.customer_login(p_code text, p_password text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_row public.customer_sessions%rowtype;
@@ -463,7 +463,7 @@ create or replace function public.customer_submit_selection(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_session public.customer_sessions%rowtype;
@@ -537,3 +537,4 @@ grant execute on function public.customer_submit_selection(uuid, text[], text, t
 insert into public.admins (username, password_hash, display_name)
 values ('herdem', crypt('herdem123', gen_salt('bf', 10)), 'Foto Herdem Admin')
 on conflict (username) do nothing;
+

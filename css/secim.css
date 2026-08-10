@@ -16,7 +16,10 @@
 
 .secim-body[data-protection="1"] .secim-gallery img,
 .secim-body[data-protection="2"] .secim-gallery img,
-.secim-body[data-protection="3"] .secim-gallery img {
+.secim-body[data-protection="3"] .secim-gallery img,
+.secim-body[data-protection="1"] .secim-lb-figure img,
+.secim-body[data-protection="2"] .secim-lb-figure img,
+.secim-body[data-protection="3"] .secim-lb-figure img {
   -webkit-user-drag: none;
   user-drag: none;
   pointer-events: none;
@@ -216,9 +219,42 @@
 
 .secim-photo img {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
+}
+
+/* Büyütme butonu */
+.secim-zoom {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(18, 12, 9, 0.55);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  z-index: 3;
+  backdrop-filter: blur(6px);
+}
+
+.secim-zoom:hover {
+  background: rgba(141, 92, 59, 0.85);
+}
+
+.secim-photo:hover .secim-zoom,
+.secim-zoom:focus-visible {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* Filigran */
@@ -235,6 +271,25 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: clamp(0.9rem, 2.4vw, 1.4rem);
+  transform: rotate(-18deg);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.secim-body[data-protection="1"] .secim-lb-figure::after,
+.secim-body[data-protection="2"] .secim-lb-figure::after,
+.secim-body[data-protection="3"] .secim-lb-figure::after {
+  content: "Foto Herdem";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.34);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 3vw, 1.8rem);
   transform: rotate(-18deg);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   pointer-events: none;
@@ -291,7 +346,106 @@
   border-radius: 18px;
 }
 
+/* Tam ekran büyütme (lightbox) */
+.secim-body.has-lightbox {
+  overflow: hidden;
+}
+
+.secim-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+  background: rgba(18, 12, 9, 0.93);
+  backdrop-filter: blur(12px);
+}
+
+.secim-lightbox[hidden] {
+  display: none;
+}
+
+.secim-lb-figure {
+  position: relative;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.secim-lb-figure img {
+  max-width: 100%;
+  max-height: calc(100vh - 150px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.secim-lb-caption {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+}
+
+.secim-lb-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.secim-lb-close:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: rotate(90deg);
+}
+
+.secim-lb-nav {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.secim-lb-nav:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
 @media (max-width: 860px) {
+  .secim-zoom {
+    opacity: 1;
+    transform: scale(1);
+  }
+
   .secim-head {
     position: static;
     flex-direction: column;
@@ -310,5 +464,33 @@
   .secim-gallery {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
+  }
+
+  .secim-lightbox {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .secim-lb-figure img {
+    max-height: calc(100vh - 130px);
+  }
+
+  .secim-lb-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    font-size: 1.6rem;
+  }
+
+  .secim-lb-prev {
+    left: 10px;
+  }
+
+  .secim-lb-next {
+    right: 10px;
   }
 }

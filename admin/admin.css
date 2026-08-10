@@ -57,7 +57,7 @@
 .admin-main {
   padding: 44px 0 72px;
   display: grid;
-  gap: 24px;
+  gap: 32px;
 }
 
 .admin-panel {
@@ -158,7 +158,7 @@
 .admin-albums {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 18px;
+  gap: 28px;
   margin-top: 18px;
 }
 
@@ -312,7 +312,7 @@
 
 .admin-sessions {
   display: grid;
-  gap: 14px;
+  gap: 20px;
   margin-top: 18px;
 }
 
@@ -434,7 +434,7 @@
 .admin-account-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 32px;
 }
 
 .admin-account-grid h3 {

@@ -80,7 +80,7 @@
 .secim-main {
   padding: 48px 0 80px;
   display: grid;
-  gap: 40px;
+  gap: 24px;
 }
 
 .secim-card {
@@ -176,6 +176,7 @@
 
 .secim-contact {
   padding: 22px 26px;
+  margin-bottom: 24px;
 }
 
 .secim-contact-head h2 {
@@ -203,7 +204,7 @@
 .secim-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 32px;
+  gap: 18px;
 }
 
 .secim-photo {

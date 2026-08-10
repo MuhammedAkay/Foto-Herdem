@@ -156,6 +156,24 @@
 
       <section class="panel admin-panel">
         <div class="admin-panel-head">
+          <h2>Bildirim Ayarları</h2>
+        </div>
+        <form class="form admin-email-form" id="email-form" novalidate>
+          <p class="admin-hint">
+            Müşteri seçimini gönderdiğinde bu e-posta adresine bildirim gider.
+            İlk kullanımda <code>formsubmit.co</code>'dan gelen doğrulama bağlantısına bir kez tıklamanız gerekir.
+          </p>
+          <div class="field">
+            <label for="admin-email">Bildirim E-posta Adresi</label>
+            <input id="admin-email" name="admin_email" type="email" placeholder="ornek@fotoherdem.com" required>
+          </div>
+          <div class="form-status" data-status></div>
+          <button class="btn btn-dark btn-sm" type="submit">Kaydet</button>
+        </form>
+      </section>
+
+      <section class="panel admin-panel">
+        <div class="admin-panel-head">
           <h2>Hesap</h2>
         </div>
         <div class="admin-account-grid">

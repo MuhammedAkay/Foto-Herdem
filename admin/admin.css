@@ -54,10 +54,16 @@
   font-size: 0.9rem;
 }
 
+.btn-danger {
+  color: #a03a2e;
+  background: rgba(180, 70, 60, 0.1);
+  border-color: rgba(180, 70, 60, 0.28);
+}
+
 .admin-main {
   padding: 44px 0 72px;
   display: grid;
-  gap: 32px;
+  gap: 48px;
 }
 
 .admin-panel {
@@ -443,6 +449,10 @@
 }
 
 @media (max-width: 860px) {
+  .admin-main {
+    gap: 40px;
+  }
+
   .admin-session {
     grid-template-columns: 1fr;
   }

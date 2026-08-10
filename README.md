@@ -77,6 +77,20 @@ Lokal test için aynı komutu elinizle de çalıştırabilirsiniz: `node scripts
 > Tarayıcı ekran görüntüsü (SS) teknik olarak tamamen engellenemez; bu katmanlar indirme ve
 > kopyalamayı zorlaştırır, caydırıcıdır.
 
+## Sorun Giderme
+
+**"function crypt(text, text) does not exist" hatası**
+Bu hata, Supabase'te `pgcrypto` uzantısına erişilemediğinde görülür. Şemadaki güvenli
+fonksiyonlar artık `search_path = public, extensions` ile çalışır. Yine de bu hatayı alırsanız
+SQL Editor'da şu komutu çalıştırıp ardından `supabase/schema.sql`'i baştan çalıştırın:
+
+```sql
+create extension if not exists pgcrypto;
+```
+
+Şema tekrar çalıştırılabilir (idempotent): tablolar `if not exists`, fonksiyonlar
+`create or replace`, admin kaydı `on conflict do nothing` kullanır. Mevcut veriler silinmez.
+
 ## Güvenlik Notları
 
 - Tüm veri erişimi yalnızca RPC fonksiyonları üzerinden yapılır; tablolara anon/authenticated

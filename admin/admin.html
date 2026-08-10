@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Admin | Foto Herdem</title>
+  <link rel="icon" href="../assets/logo.png" type="image/png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-topbar">
+    <div class="container admin-topbar-inner">
+      <a class="brand" href="../index.html" aria-label="Foto Herdem ana sayfa">
+        <img class="brand-logo" src="../assets/logo.png" alt="" aria-hidden="true">
+        <span>Foto Herdem <em class="admin-badge">Admin</em></span>
+      </a>
+      <div class="admin-topbar-actions" id="topbar-actions" hidden>
+        <span class="admin-who" id="admin-who"></span>
+        <a class="btn btn-secondary btn-sm" href="../index.html">Siteyi Gör</a>
+        <button class="btn btn-dark btn-sm" id="btn-logout" type="button">Çıkış Yap</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+
+    <section class="panel admin-panel" id="view-setup" hidden>
+      <div class="admin-panel-head">
+        <h1>Supabase bağlantısı gerekli</h1>
+      </div>
+      <p class="admin-hint">
+        Bu sayfa verileri Supabase üzerinden yönetir. Bağlantı henüz yapılandırılmamış.
+        Kurulum için aşağıdaki adımları izleyin.
+      </p>
+      <ol class="admin-steps">
+        <li>
+          <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>'da ücretsiz bir proje oluşturun.
+        </li>
+        <li>SQL Editor'ı açın ve <code>supabase/schema.sql</code> dosyasının içeriğini çalıştırın.</li>
+        <li>Proje Ayarları → API bölümünden <code>Project URL</code> ve <code>anon public</code> anahtarını kopyalayın.</li>
+        <li>Bu değerleri <code>js/config.js</code> dosyasındaki <code>SUPABASE_URL</code> ve <code>SUPABASE_ANON_KEY</code> alanlarına yapıştırın.</li>
+        <li>Varsayılan admin girişi: kullanıcı adı <code>herdem</code>, şifre <code>herdem123</code> (ilk girişte değiştirin).</li>
+      </ol>
+      <p class="admin-hint">
+        Ayrıca albüm listesinin görünmesi için <code>Albümler/fotoğraflar</code> klasörünü doldurun ve
+        <code>node scripts/build-albums.js</code> komutunu çalıştırın.
+      </p>
+    </section>
+
+    <section class="panel admin-panel admin-login" id="view-login" hidden>
+      <div class="admin-login-inner">
+        <h1>Yönetici Girişi</h1>
+        <p class="admin-hint">Albüm seçim linklerini yönetmek için giriş yapın.</p>
+        <form class="form" id="login-form" novalidate>
+          <div class="field">
+            <label for="login-username">Kullanıcı Adı</label>
+            <input id="login-username" name="username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="login-password">Şifre</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="form-status" data-status></div>
+          <button class="btn btn-primary" type="submit">Giriş Yap</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-dashboard" hidden>
+      <div class="admin-dash-head">
+        <div>
+          <div class="eyebrow">Yönetim Paneli</div>
+          <h1>Albüm Seçim Linkleri</h1>
+          <p class="admin-hint">
+            <code>Albümler/fotoğraflar</code> klasöründen okunan albümlere, müşterilerin tek seferlik fotoğraf
+            seçimi yapabileceği korumalı linkler üretin.
+          </p>
+        </div>
+      </div>
+
+      <section class="panel admin-panel">
+        <div class="admin-panel-head">
+          <h2>Albümler</h2>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-albums" type="button">Yenile</button>
+        </div>
+        <p class="admin-hint" id="albums-hint"></p>
+        <div class="admin-albums" id="albums-list"></div>
+      </section>
+
+      <section class="panel admin-panel" id="create-panel" hidden>
+        <div class="admin-panel-head">
+          <h2>Yeni Seçim Linki</h2>
+        </div>
+        <form class="form admin-create-form" id="create-form" novalidate>
+          <div class="field">
+            <label for="create-album">Albüm</label>
+            <select id="create-album" name="album_path"></select>
+          </div>
+          <div class="admin-create-grid">
+            <div class="field">
+              <label for="create-password">Müşteri Şifresi</label>
+              <input id="create-password" name="password" type="text" minlength="4" maxlength="40" required>
+            </div>
+            <div class="field">
+              <label for="create-max">Seçilebilecek Fotoğraf Sayısı</label>
+              <input id="create-max" name="max_selections" type="number" min="1" max="500" value="10" required>
+            </div>
+          </div>
+          <div class="field">
+            <label>Koruma Seviyesi</label>
+            <div class="radio-row" id="protection-radios">
+              <label class="radio-pill"><input type="radio" name="protection_level" value="0"> Yok</label>
+              <label class="radio-pill"><input type="radio" name="protection_level" value="1"> Hafif</label>
+              <label class="radio-pill"><input type="radio" name="protection_level" value="2" checked> Güçlü</label>
+              <label class="radio-pill"><input type="radio" name="protection_level" value="3"> Maksimum</label>
+            </div>
+            <small class="admin-hint">
+              Hafif: sağ tık / sürükleme engeli + filigran. Güçlü: ayrıca kısayol ve yazdırma engeli.
+              Maksimum: ayrıca sayfa arka plana alınınca karartma.
+            </small>
+          </div>
+          <div class="field">
+            <label for="create-expires">Bitiş Tarihi <span class="admin-muted">(opsiyonel)</span></label>
+            <input id="create-expires" name="expires_at" type="datetime-local">
+          </div>
+          <div class="form-status" data-status></div>
+          <div class="admin-actions">
+            <button class="btn btn-primary" type="submit">Linki Oluştur</button>
+            <button class="btn btn-secondary" type="button" id="btn-cancel-create">Vazgeç</button>
+          </div>
+        </form>
+        <div class="admin-result" id="create-result" hidden></div>
+      </section>
+
+      <section class="panel admin-panel">
+        <div class="admin-panel-head">
+          <h2>Oluşturulan Linkler</h2>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-sessions" type="button">Yenile</button>
+        </div>
+        <div class="admin-sessions" id="sessions-list"></div>
+      </section>
+
+      <section class="panel admin-panel" id="selections-panel" hidden>
+        <div class="admin-panel-head">
+          <h2 id="selections-title">Seçimler</h2>
+          <button class="btn btn-secondary btn-sm" id="btn-close-selections" type="button">Kapat</button>
+        </div>
+        <div id="selections-list"></div>
+      </section>
+
+      <section class="panel admin-panel">
+        <div class="admin-panel-head">
+          <h2>Hesap</h2>
+        </div>
+        <div class="admin-account-grid">
+          <form class="form" id="password-form" novalidate>
+            <h3>Şifremi Değiştir</h3>
+            <div class="field">
+              <label for="old-password">Mevcut Şifre</label>
+              <input id="old-password" name="old_password" type="password" required>
+            </div>
+            <div class="field">
+              <label for="new-password">Yeni Şifre</label>
+              <input id="new-password" name="new_password" type="password" minlength="6" required>
+            </div>
+            <div class="form-status" data-status></div>
+            <button class="btn btn-dark btn-sm" type="submit">Güncelle</button>
+          </form>
+          <form class="form" id="admin-form" novalidate>
+            <h3>Yeni Admin Ekle</h3>
+            <div class="field">
+              <label for="new-admin-username">Kullanıcı Adı</label>
+              <input id="new-admin-username" name="username" minlength="3" required>
+            </div>
+            <div class="field">
+              <label for="new-admin-password">Şifre</label>
+              <input id="new-admin-password" name="password" type="password" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="new-admin-name">Görünen Ad <span class="admin-muted">(opsiyonel)</span></label>
+              <input id="new-admin-name" name="display_name">
+            </div>
+            <div class="form-status" data-status></div>
+            <button class="btn btn-dark btn-sm" type="submit">Ekle</button>
+          </form>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>© <span data-year></span> Foto Herdem</div>
+      <div class="footer-links">
+        <a href="../index.html">Ana Sayfa</a>
+        <a href="../secim.html">Müşteri Seçim</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/vendor/supabase.min.js"></script>
+  <script src="./admin.js"></script>
+</body>
+</html>

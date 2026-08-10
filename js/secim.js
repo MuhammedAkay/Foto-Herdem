@@ -14,6 +14,7 @@
     selected: new Map(), // photoPath -> sıra
     maxSelections: 10,
     photoUrl: new Map(),
+    lightboxIndex: 0,
     submitted: false,
   };
 
@@ -125,11 +126,11 @@
     document.addEventListener("contextmenu", (e) => e.preventDefault());
 
     document.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".secim-photo")) e.preventDefault();
+      if (e.target.closest(".secim-photo, .secim-lb-figure")) e.preventDefault();
     });
 
     document.addEventListener("auxclick", (e) => {
-      if (e.button === 1 && e.target.closest(".secim-photo")) e.preventDefault();
+      if (e.button === 1 && e.target.closest(".secim-photo, .secim-lb-figure")) e.preventDefault();
     });
 
     document.addEventListener("click", (e) => {
@@ -188,6 +189,7 @@
         return `
           <figure class="secim-photo" data-photo="${escapeAttr(photo)}" tabindex="0" role="checkbox" aria-checked="false" aria-label="Fotoğraf ${index + 1}">
             <img src="${url}" alt="" loading="lazy">
+            <button class="secim-zoom" type="button" data-zoom="${index}" aria-label="Fotoğrafı büyüt">🔍</button>
             <span class="check">✓</span>
             <span class="num"></span>
           </figure>`;
@@ -195,6 +197,12 @@
       .join("");
 
     gallery.addEventListener("click", (e) => {
+      const zoom = e.target.closest("[data-zoom]");
+      if (zoom) {
+        e.preventDefault();
+        openLightbox(Number(zoom.dataset.zoom));
+        return;
+      }
       const figure = e.target.closest(".secim-photo");
       if (figure) togglePhoto(figure);
     });
@@ -207,6 +215,80 @@
         togglePhoto(figure);
       }
     });
+  }
+
+  // ---------- Tam ekran büyütme ----------
+
+  function ensureLightbox() {
+    let box = $("#secim-lightbox");
+    if (box) return box;
+
+    box = document.createElement("div");
+    box.className = "secim-lightbox";
+    box.id = "secim-lightbox";
+    box.hidden = true;
+    box.innerHTML = `
+      <button class="secim-lb-close" type="button" aria-label="Kapat">×</button>
+      <button class="secim-lb-nav secim-lb-prev" type="button" aria-label="Önceki fotoğraf">‹</button>
+      <figure class="secim-lb-figure">
+        <img alt="">
+        <figcaption class="secim-lb-caption"></figcaption>
+      </figure>
+      <button class="secim-lb-nav secim-lb-next" type="button" aria-label="Sonraki fotoğraf">›</button>`;
+    document.body.appendChild(box);
+
+    box.addEventListener("click", (e) => {
+      if (e.target === box) closeLightbox();
+    });
+    box.querySelector(".secim-lb-close").addEventListener("click", closeLightbox);
+    box.querySelector(".secim-lb-prev").addEventListener("click", (e) => {
+      e.stopPropagation();
+      showLightboxPhoto(state.lightboxIndex - 1);
+    });
+    box.querySelector(".secim-lb-next").addEventListener("click", (e) => {
+      e.stopPropagation();
+      showLightboxPhoto(state.lightboxIndex + 1);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (box.hidden) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") showLightboxPhoto(state.lightboxIndex - 1);
+      if (e.key === "ArrowRight") showLightboxPhoto(state.lightboxIndex + 1);
+    });
+
+    return box;
+  }
+
+  function showLightboxPhoto(index) {
+    const photos = state.album.photos;
+    if (!photos.length) return;
+    const count = photos.length;
+    state.lightboxIndex = (index + count) % count;
+
+    const photo = photos[state.lightboxIndex];
+    const url = state.photoUrl.get(photo) || `Albümler/${encodeURI(photo)}`;
+    const box = $("#secim-lightbox");
+    const img = box.querySelector("img");
+    img.src = url;
+    img.alt = `Fotoğraf ${state.lightboxIndex + 1}`;
+    box.querySelector(".secim-lb-caption").textContent = `${state.lightboxIndex + 1} / ${count}`;
+  }
+
+  function openLightbox(index) {
+    if (!state.album || !state.album.photos.length) return;
+    ensureLightbox();
+    showLightboxPhoto(index);
+    $("#secim-lightbox").hidden = false;
+    document.body.classList.add("has-lightbox");
+  }
+
+  function closeLightbox() {
+    const box = $("#secim-lightbox");
+    if (!box) return;
+    box.hidden = true;
+    box.querySelector("img").src = "";
+    document.body.classList.remove("has-lightbox");
   }
 
   function enterPicker(session) {

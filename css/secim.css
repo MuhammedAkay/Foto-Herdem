@@ -1,0 +1,314 @@
+.secim-body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(141, 92, 59, 0.12), transparent 30%),
+    linear-gradient(180deg, #fbf7f2 0%, #f4ede5 100%);
+}
+
+/* Koruma: seçim yapılamasın / kopyalanmasın */
+.secim-body[data-protection="1"],
+.secim-body[data-protection="2"],
+.secim-body[data-protection="3"] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.secim-body[data-protection="1"] .secim-gallery img,
+.secim-body[data-protection="2"] .secim-gallery img,
+.secim-body[data-protection="3"] .secim-gallery img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+.secim-body[data-protection="2"] .secim-gallery figure,
+.secim-body[data-protection="3"] .secim-gallery figure {
+  -webkit-touch-callout: none;
+}
+
+.secim-body.is-dimmed .secim-picker-wrap,
+.secim-body.is-dimmed .secim-gallery,
+.secim-body.is-dimmed .secim-head {
+  filter: blur(14px);
+  opacity: 0.55;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+@media print {
+  .secim-body[data-protection="2"] .secim-gallery,
+  .secim-body[data-protection="3"] .secim-gallery,
+  .secim-body[data-protection="2"] .secim-head,
+  .secim-body[data-protection="3"] .secim-head,
+  .secim-body[data-protection="2"] .secim-contact,
+  .secim-body[data-protection="3"] .secim-contact {
+    display: none !important;
+  }
+}
+
+.secim-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(18px);
+  background: rgba(251, 247, 242, 0.9);
+  border-bottom: 1px solid rgba(71, 54, 43, 0.1);
+}
+
+.secim-topbar-inner {
+  padding: 10px 0;
+}
+
+.secim-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(141, 92, 59, 0.14);
+  color: var(--brand-dark);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.secim-main {
+  padding: 48px 0 80px;
+  display: grid;
+  gap: 24px;
+}
+
+.secim-card {
+  max-width: 520px;
+  width: 100%;
+  margin-inline: auto;
+  padding: 32px;
+}
+
+.secim-card-inner h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.secim-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.secim-card .form {
+  margin-top: 20px;
+}
+
+.secim-message {
+  text-align: center;
+}
+
+.secim-msg-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: rgba(180, 70, 60, 0.12);
+  color: #a03a2e;
+  font-size: 1.6rem;
+}
+
+.secim-msg-ok {
+  background: rgba(86, 120, 69, 0.14);
+  color: #3f5c33;
+}
+
+.secim-msg-icon + h1 {
+  margin-top: 0;
+}
+
+.secim-message .btn {
+  margin-top: 18px;
+}
+
+.secim-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px 28px;
+  position: sticky;
+  top: 74px;
+  z-index: 20;
+}
+
+.secim-head h1 {
+  margin: 8px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.secim-counter {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.secim-counter-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.secim-counter-count strong {
+  font-size: 2rem;
+  color: var(--brand-dark);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.secim-contact {
+  padding: 22px 26px;
+}
+
+.secim-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.secim-optional {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+.secim-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.secim-photo {
+  position: relative;
+  margin: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 14px 32px rgba(53, 35, 26, 0.1);
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.secim-photo:hover {
+  transform: translateY(-2px);
+}
+
+.secim-photo.is-selected {
+  border-color: var(--brand);
+  box-shadow: 0 18px 40px rgba(141, 92, 59, 0.3);
+}
+
+.secim-photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+/* Filigran */
+.secim-body[data-protection="1"] .secim-photo::after,
+.secim-body[data-protection="2"] .secim-photo::after,
+.secim-body[data-protection="3"] .secim-photo::after {
+  content: "Foto Herdem";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.34);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(0.9rem, 2.4vw, 1.4rem);
+  transform: rotate(-18deg);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.secim-photo .check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 3;
+  box-shadow: 0 8px 18px rgba(141, 92, 59, 0.4);
+}
+
+.secim-photo.is-selected .check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.secim-photo .num {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(18, 12, 9, 0.6);
+  color: #fff;
+  font-size: 0.82rem;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.secim-photo.is-selected .num {
+  opacity: 1;
+}
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed rgba(71, 54, 43, 0.22);
+  border-radius: 18px;
+}
+
+@media (max-width: 860px) {
+  .secim-head {
+    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .secim-counter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .secim-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .secim-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+}

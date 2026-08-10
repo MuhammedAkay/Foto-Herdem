@@ -278,6 +278,7 @@
               ${s.status === "active" ? `<button class="btn btn-dark btn-sm" type="button" data-revoke="${escapeAttr(s.id)}">İptal Et</button>` : ""}
               <button class="btn btn-secondary btn-sm" type="button" data-copy-link="${escapeAttr(link)}">Linki Kopyala</button>
               <button class="btn btn-primary btn-sm" type="button" data-selections="${escapeAttr(s.id)}" ${hasSelections ? "" : "disabled"}>Seçimleri Gör</button>
+              <button class="btn btn-danger btn-sm" type="button" data-delete="${escapeAttr(s.id)}">Sil</button>
             </div>
           </article>`;
       })
@@ -335,6 +336,16 @@
       await loadSessions();
     } catch (err) {
       alert(`İptal edilemedi: ${err.message}`);
+    }
+  }
+
+  async function deleteSession(sessionId) {
+    if (!confirm("Bu seçim linki ve tüm seçimleri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.")) return;
+    try {
+      await rpc("admin_delete_session", { p_token: token(), p_session_id: sessionId });
+      await loadSessions();
+    } catch (err) {
+      alert(`Silinemedi: ${err.message}`);
     }
   }
 
@@ -505,6 +516,11 @@
       const selections = e.target.closest("[data-selections]");
       if (selections) {
         openSelections(selections.dataset.selections);
+        return;
+      }
+      const del = e.target.closest("[data-delete]");
+      if (del) {
+        deleteSession(del.dataset.delete);
       }
     });
 

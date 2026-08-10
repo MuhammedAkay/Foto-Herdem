@@ -63,17 +63,17 @@
   function toast(text) {
     let node = $("#secim-toast");
     if (!node) {
-      node = document.createElement("p");
+      node = document.createElement("div");
       node.id = "secim-toast";
-      node.className = "secim-hint";
-      $("#secim-head").appendChild(node);
+      document.body.appendChild(node);
     }
     node.textContent = text;
-    node.style.color = "#a03a2e";
+    node.hidden = false;
     clearTimeout(node._t);
     node._t = setTimeout(() => {
       node.textContent = "";
-    }, 2800);
+      node.hidden = true;
+    }, 3200);
   }
 
   function updateCounter() {
@@ -93,8 +93,25 @@
       minHint.textContent = needMore ? `En az ${min} fotoğraf seçmelisiniz.` : "";
     }
 
+    const nextBtn = $("#secim-next");
+    if (nextBtn) {
+      nextBtn.disabled = count === 0 || count < min || state.submitted;
+    }
     $("#secim-submit").disabled = count === 0 || count < min || state.submitted;
     $("#secim-submit").textContent = state.submitted ? "Gönderiliyor…" : "Seçimimi Gönder";
+  }
+
+  function goToStep(step) {
+    $("#secim-step-1").hidden = step !== 1;
+    $("#secim-step-2").hidden = step !== 2;
+    $("#secim-dot-1").classList.toggle("is-active", step === 1);
+    $("#secim-dot-2").classList.toggle("is-active", step === 2);
+    if (step === 2) {
+      const count = state.selected.size;
+      $("#secim-step2-info").textContent =
+        `${count} fotoğraf seçtiniz. Seçiminizin size ulaşabilmesi için bilgilerinizi doldurun.`;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function togglePhoto(figure) {
@@ -332,7 +349,7 @@
     renderGallery();
     updateCounter();
     applyProtection(session.protection_level || 0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    goToStep(1);
   }
 
   async function login(form) {
@@ -384,13 +401,15 @@
     }
 
     const contactForm = $("#secim-contact-form");
-    const contactName = contactForm.elements.contact_name.value.trim();
-    const contactPhone = contactForm.elements.contact_phone.value.trim();
-    const note = contactForm.elements.note.value.trim() || null;
+    const contactNameInput = contactForm?.elements?.contact_name;
+    const contactPhoneInput = contactForm?.elements?.contact_phone;
+    const contactName = contactNameInput ? contactNameInput.value.trim() : "";
+    const contactPhone = contactPhoneInput ? contactPhoneInput.value.trim() : "";
+    const note = contactForm?.elements?.note ? contactForm.elements.note.value.trim() : null;
 
     if (!contactName || !contactPhone) {
       toast("Gelin/Damat ismi ve telefon numarası zorunludur.");
-      contactForm.elements.contact_name.focus();
+      if (contactNameInput) contactNameInput.focus();
       return;
     }
 
@@ -509,7 +528,19 @@
 
     $("#secim-submit").addEventListener("click", submitSelection);
 
-    $("#secim-contact").hidden = false;
+    $("#secim-next").addEventListener("click", () => {
+      if (state.selected.size === 0 || state.selected.size < state.minSelections) {
+        toast(`En az ${state.minSelections} fotoğraf seçmelisiniz.`);
+        return;
+      }
+      goToStep(2);
+      setTimeout(() => {
+        const nameInput = $("#secim-name");
+        if (nameInput) nameInput.focus();
+      }, 350);
+    });
+
+    $("#secim-back").addEventListener("click", () => goToStep(1));
 
     if (params.get("kod") && params.get("sifre")) {
       $("#secim-login-form").requestSubmit();

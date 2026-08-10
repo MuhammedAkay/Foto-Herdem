@@ -178,6 +178,16 @@
   padding: 22px 26px;
 }
 
+.secim-contact-head h2 {
+  margin: 0 0 4px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+}
+
+.required-mark {
+  color: #a03a2e;
+}
+
 .secim-contact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -419,8 +419,56 @@
       });
       setStatus(form, `Admin eklendi: ${data.username}`);
       form.reset();
+      await loadAdmins();
     } catch (err) {
       setStatus(form, `Hata: ${err.message}`, true);
+    }
+  }
+
+  async function loadAdmins() {
+    const list = $("#admins-list");
+    if (!list) return;
+    try {
+      const admins = (await rpc("admin_list_admins", { p_token: token() })) || [];
+      if (admins.length === 0) {
+        list.innerHTML = `<div class="empty-state">Henüz admin yok.</div>`;
+        return;
+      }
+      list.innerHTML = admins
+        .map((a) => {
+          const mainBadge = a.is_main
+            ? `<span class="status-badge status-active">Ana Admin</span>`
+            : "";
+          const inactiveBadge = a.is_active
+            ? ""
+            : `<span class="status-badge status-revoked">Silindi</span>`;
+          const deleteBtn = a.is_main
+            ? ""
+            : `<button class="btn btn-danger btn-sm" type="button" data-delete-admin="${escapeAttr(a.id)}">Sil</button>`;
+          return `
+            <article class="admin-admin-item">
+              <div class="admin-admin-info">
+                <strong>${escapeHtml(a.display_name || a.username)}</strong>
+                <span class="tag">@${escapeHtml(a.username)}</span>
+                ${mainBadge}
+                ${inactiveBadge}
+              </div>
+              <div class="admin-session-actions">${deleteBtn}</div>
+            </article>`;
+        })
+        .join("");
+    } catch (err) {
+      list.innerHTML = `<div class="empty-state">Adminler yüklenemedi: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  async function deleteAdmin(adminId) {
+    if (!confirm("Bu admin silinsin mi? Silinen admin bir daha giriş yapamaz.")) return;
+    try {
+      await rpc("admin_delete_admin", { p_token: token(), p_admin_id: adminId });
+      await loadAdmins();
+    } catch (err) {
+      alert(`Silinemedi: ${err.message}`);
     }
   }
 
@@ -471,7 +519,8 @@
       }
       $("#admin-who").textContent = me.display_name || me.username;
       show("dashboard");
-      await Promise.all([loadAlbums(), loadSessions(), loadAdminEmail()]);
+      $("#admins-panel").hidden = !me.is_main;
+      await Promise.all([loadAlbums(), loadSessions(), loadAdminEmail(), loadAdmins()]);
     } catch (_) {
       localStorage.removeItem(TOKEN_KEY);
       show("login");
@@ -589,6 +638,13 @@
     $("#admin-form").addEventListener("submit", (e) => {
       e.preventDefault();
       addAdmin(e.currentTarget);
+    });
+
+    $("#admins-list").addEventListener("click", (e) => {
+      const del = e.target.closest("[data-delete-admin]");
+      if (del) {
+        deleteAdmin(del.dataset.deleteAdmin);
+      }
     });
 
     document.querySelectorAll("[data-year]").forEach((node) => {

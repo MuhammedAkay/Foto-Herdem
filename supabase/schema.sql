@@ -16,9 +16,14 @@ create table if not exists public.admins (
   username text unique not null check (length(username) >= 3),
   password_hash text not null,
   display_name text not null default 'Admin',
+  is_main boolean not null default false,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- Mevcut kurulumlar için: is_main sütununu ekle
+alter table public.admins
+  add column if not exists is_main boolean not null default false;
 
 create table if not exists public.admin_sessions (
   token uuid primary key default gen_random_uuid(),
@@ -34,6 +39,7 @@ create table if not exists public.customer_sessions (
   album_title text not null,
   password_hash text not null,
   max_selections int not null default 10 check (max_selections between 1 and 500),
+  min_selections int not null default 0 check (min_selections between 0 and 500),
   protection_level int not null default 2 check (protection_level between 0 and 3),
   expires_at timestamptz,
   status text not null default 'active'
@@ -46,6 +52,10 @@ create table if not exists public.customer_sessions (
 -- Mevcut kurulumlar için: photos sütununu ekle
 alter table public.customer_sessions
   add column if not exists photos text[] not null default '{}';
+
+-- Mevcut kurulumlar için: min_selections sütununu ekle
+alter table public.customer_sessions
+  add column if not exists min_selections int not null default 0;
 
 create table if not exists public.selections (
   id uuid primary key default gen_random_uuid(),
@@ -70,6 +80,13 @@ create table if not exists public.albums (
   updated_at timestamptz not null default now()
 );
 
+-- Bildirim ayarları (bildirim e-posta adresi vb.)
+create table if not exists public.admin_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
 -- RLS: anon/authenticated tablolara doğrudan erişemesin.
 -- Tüm erişim aşağıdaki güvenli RPC fonksiyonları üzerinden yapılır.
 alter table public.admins enable row level security;
@@ -77,6 +94,7 @@ alter table public.admin_sessions enable row level security;
 alter table public.customer_sessions enable row level security;
 alter table public.selections enable row level security;
 alter table public.albums enable row level security;
+alter table public.admin_settings enable row level security;
 
 -- -------------------------------------------------------------
 -- YARDIMCI FONKSİYONLAR
@@ -107,6 +125,7 @@ as $$
     'album_path', p.album_path,
     'album_title', p.album_title,
     'max_selections', p.max_selections,
+    'min_selections', p.min_selections,
     'protection_level', p.protection_level,
     'status', p.status,
     'expires_at', p.expires_at,
@@ -156,7 +175,8 @@ set search_path = public, extensions
 as $$
   select jsonb_build_object(
     'username', a.username,
-    'display_name', a.display_name
+    'display_name', a.display_name,
+    'is_main', a.is_main
   )
   from public.admin_sessions s
   join public.admins a on a.id = s.admin_id
@@ -232,7 +252,7 @@ begin
   from public.admin_sessions s
   where s.token = p_token;
 
-  if (select username from public.admins where id = v_admin_id) <> 'herdem' then
+  if not exists (select 1 from public.admins where id = v_admin_id and is_main = true) then
     raise exception 'yalnızca ana admin yeni admin ekleyebilir';
   end if;
 
@@ -252,13 +272,95 @@ begin
 end;
 $$;
 
+-- Admin listesi (yalnızca ana admin)
+create or replace function public.admin_list_admins(p_token uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_result jsonb;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  if not exists (
+    select 1 from public.admin_sessions s
+    join public.admins a on a.id = s.admin_id
+    where s.token = p_token and a.is_main = true
+  ) then
+    raise exception 'yalnızca ana admin adminleri yönetebilir';
+  end if;
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'id', a.id,
+      'username', a.username,
+      'display_name', a.display_name,
+      'is_main', a.is_main,
+      'is_active', a.is_active,
+      'created_at', a.created_at
+    ) order by a.is_main desc, a.created_at asc
+  ), '[]'::jsonb) into v_result
+  from public.admins a;
+
+  return v_result;
+end;
+$$;
+
+-- Admin silme (yalnızca ana admin, ana admin silinemez)
+create or replace function public.admin_delete_admin(p_token uuid, p_admin_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_is_main boolean;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select a.is_main into v_is_main
+  from public.admin_sessions s
+  join public.admins a on a.id = s.admin_id
+  where s.token = p_token;
+
+  if not coalesce(v_is_main, false) then
+    raise exception 'yalnızca ana admin admin silebilir';
+  end if;
+
+  if not exists (select 1 from public.admins where id = p_admin_id) then
+    raise exception 'admin bulunamadı';
+  end if;
+
+  if exists (select 1 from public.admins where id = p_admin_id and is_main = true) then
+    raise exception 'ana admin silinemez';
+  end if;
+
+  if exists (select 1 from public.admin_sessions where admin_id = p_admin_id and token = p_token) then
+    raise exception 'kendi hesabınızı silemezsiniz';
+  end if;
+
+  update public.admins set is_active = false where id = p_admin_id;
+  delete from public.admin_sessions where admin_id = p_admin_id;
+
+  return true;
+end;
+$$;
+
 -- Müşteri seçim linki oluşturma (kod sunucuda üretilir)
+drop function if exists public.admin_create_session(uuid, text, text, text, int, int, timestamptz);
 create or replace function public.admin_create_session(
   p_token uuid,
   p_album_path text,
   p_album_title text,
   p_password text,
   p_max_selections int,
+  p_min_selections int default 0,
   p_protection_level int default 2,
   p_expires_at timestamptz default null
 )
@@ -288,6 +390,14 @@ begin
     raise exception 'geçersiz seçim sayısı';
   end if;
 
+  if p_min_selections is null or p_min_selections < 0 or p_min_selections > 500 then
+    raise exception 'geçersiz en az seçim sayısı';
+  end if;
+
+  if p_min_selections > p_max_selections then
+    raise exception 'en az seçim sayısı, en fazla seçim sayısından büyük olamaz';
+  end if;
+
   select s.admin_id into v_admin_id
   from public.admin_sessions s
   where s.token = p_token;
@@ -304,10 +414,10 @@ begin
 
   insert into public.customer_sessions (
     code, album_path, album_title, password_hash,
-    max_selections, protection_level, expires_at, created_by
+    max_selections, min_selections, protection_level, expires_at, created_by
   ) values (
     v_code, trim(p_album_path), trim(p_album_title), crypt(p_password, gen_salt('bf', 10)),
-    p_max_selections, p_protection_level, p_expires_at, v_admin_id
+    p_max_selections, p_min_selections, p_protection_level, p_expires_at, v_admin_id
   )
   returning * into v_row;
 
@@ -336,6 +446,7 @@ begin
       'album_path', s.album_path,
       'album_title', s.album_title,
       'max_selections', s.max_selections,
+      'min_selections', s.min_selections,
       'protection_level', s.protection_level,
       'status', s.status,
       'expires_at', s.expires_at,
@@ -401,6 +512,55 @@ begin
 end;
 $$;
 
+-- Linki tamamen silme (seçimler otomatik silinir)
+create or replace function public.admin_delete_session(p_token uuid, p_session_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  delete from public.customer_sessions
+  where id = p_session_id;
+end;
+$$;
+
+-- Admin bildirim e-posta adresi (seçim yapılınca bu adrese bildirim gider)
+create or replace function public.admin_get_email()
+returns text
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select value from public.admin_settings where key = 'admin_email';
+$$;
+
+create or replace function public.admin_set_email(p_token uuid, p_email text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  if p_email is null or length(trim(p_email)) < 5 or position('@' in p_email) = 0 then
+    raise exception 'geçerli bir e-posta adresi girin';
+  end if;
+
+  insert into public.admin_settings (key, value)
+  values ('admin_email', lower(trim(p_email)))
+  on conflict (key) do update
+    set value = excluded.value, updated_at = now();
+end;
+$$;
+
 -- -------------------------------------------------------------
 -- MÜŞTERİ RPC'LERİ (seçim sayfası)
 -- -------------------------------------------------------------
@@ -443,9 +603,11 @@ begin
   return jsonb_build_object(
     'ok', true,
     'session_id', v_row.id,
+    'code', v_row.code,
     'album_path', v_row.album_path,
     'album_title', v_row.album_title,
     'max_selections', v_row.max_selections,
+    'min_selections', v_row.min_selections,
     'protection_level', v_row.protection_level,
     'expires_at', v_row.expires_at
   );
@@ -488,9 +650,21 @@ begin
     return jsonb_build_object('error', 'expired');
   end if;
 
+  if p_contact_name is null or trim(p_contact_name) = '' then
+    return jsonb_build_object('error', 'contact_required');
+  end if;
+
+  if p_contact_phone is null or trim(p_contact_phone) = '' then
+    return jsonb_build_object('error', 'contact_required');
+  end if;
+
   v_count := coalesce(array_length(p_photo_ids, 1), 0);
   if v_count < 1 then
     return jsonb_build_object('error', 'no_photos');
+  end if;
+
+  if v_count < v_session.min_selections then
+    return jsonb_build_object('error', 'too_few');
   end if;
 
   if v_count > v_session.max_selections then
@@ -514,6 +688,7 @@ revoke all on table public.admins from anon, authenticated;
 revoke all on table public.admin_sessions from anon, authenticated;
 revoke all on table public.customer_sessions from anon, authenticated;
 revoke all on table public.selections from anon, authenticated;
+revoke all on table public.admin_settings from anon, authenticated;
 
 grant usage on schema public to anon, authenticated;
 grant execute on function public.admin_login(text, text) to anon, authenticated;
@@ -521,10 +696,15 @@ grant execute on function public.admin_me(uuid) to anon, authenticated;
 grant execute on function public.admin_logout(uuid) to anon, authenticated;
 grant execute on function public.admin_change_password(uuid, text, text) to anon, authenticated;
 grant execute on function public.admin_create_admin(uuid, text, text, text) to anon, authenticated;
-grant execute on function public.admin_create_session(uuid, text, text, text, int, int, timestamptz) to anon, authenticated;
+grant execute on function public.admin_list_admins(uuid) to anon, authenticated;
+grant execute on function public.admin_delete_admin(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_create_session(uuid, text, text, text, int, int, int, timestamptz) to anon, authenticated;
 grant execute on function public.admin_list_sessions(uuid) to anon, authenticated;
 grant execute on function public.admin_get_selections(uuid, uuid) to anon, authenticated;
 grant execute on function public.admin_revoke_session(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_delete_session(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_get_email() to anon, authenticated;
+grant execute on function public.admin_set_email(uuid, text) to anon, authenticated;
 grant execute on function public.customer_login(text, text) to anon, authenticated;
 grant execute on function public.customer_submit_selection(uuid, text[], text, text, text) to anon, authenticated;
 
@@ -534,7 +714,9 @@ grant execute on function public.customer_submit_selection(uuid, text[], text, t
 -- İlk girişten sonra şifreyi değiştirmeyi unutmayın!
 -- -------------------------------------------------------------
 
-insert into public.admins (username, password_hash, display_name)
-values ('herdem', crypt('herdem123', gen_salt('bf', 10)), 'Foto Herdem Admin')
+insert into public.admins (username, password_hash, display_name, is_main)
+values ('herdem', crypt('herdem123', gen_salt('bf', 10)), 'Foto Herdem Admin', true)
 on conflict (username) do nothing;
 
+-- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
+update public.admins set is_main = true where username = 'herdem';

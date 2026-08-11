@@ -172,6 +172,35 @@
         </form>
       </section>
 
+      <section class="panel admin-panel" id="admins-panel" hidden>
+        <div class="admin-panel-head">
+          <h2>Admin Yönetimi</h2>
+        </div>
+        <p class="admin-hint">
+          Ana admin diğer adminleri ekleyebilir ve silebilir. Silinen admin bir daha giriş yapamaz.
+        </p>
+        <div class="admin-admins" id="admins-list"></div>
+        <form class="form admin-email-form" id="admin-form" novalidate>
+          <h3>Yeni Admin Ekle</h3>
+          <div class="admin-create-grid">
+            <div class="field">
+              <label for="new-admin-username">Kullanıcı Adı</label>
+              <input id="new-admin-username" name="username" minlength="3" required>
+            </div>
+            <div class="field">
+              <label for="new-admin-password">Şifre</label>
+              <input id="new-admin-password" name="password" type="password" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="new-admin-name">Görünen Ad <span class="admin-muted">(opsiyonel)</span></label>
+              <input id="new-admin-name" name="display_name">
+            </div>
+          </div>
+          <div class="form-status" data-status></div>
+          <button class="btn btn-dark btn-sm" type="submit">Ekle</button>
+        </form>
+      </section>
+
       <section class="panel admin-panel">
         <div class="admin-panel-head">
           <h2>Hesap</h2>
@@ -189,23 +218,6 @@
             </div>
             <div class="form-status" data-status></div>
             <button class="btn btn-dark btn-sm" type="submit">Güncelle</button>
-          </form>
-          <form class="form" id="admin-form" novalidate>
-            <h3>Yeni Admin Ekle</h3>
-            <div class="field">
-              <label for="new-admin-username">Kullanıcı Adı</label>
-              <input id="new-admin-username" name="username" minlength="3" required>
-            </div>
-            <div class="field">
-              <label for="new-admin-password">Şifre</label>
-              <input id="new-admin-password" name="password" type="password" minlength="6" required>
-            </div>
-            <div class="field">
-              <label for="new-admin-name">Görünen Ad <span class="admin-muted">(opsiyonel)</span></label>
-              <input id="new-admin-name" name="display_name">
-            </div>
-            <div class="form-status" data-status></div>
-            <button class="btn btn-dark btn-sm" type="submit">Ekle</button>
           </form>
         </div>
       </section>

@@ -450,6 +450,31 @@
   max-width: 640px;
 }
 
+.admin-admins {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.admin-admin-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(71, 54, 43, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.admin-admin-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 .empty-state {
   padding: 34px 20px;
   text-align: center;

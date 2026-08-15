@@ -450,6 +450,9 @@
       if (!adminEmail) return;
 
       const photoList = info.photoNames.map((p) => `• ${p}`).join("\n");
+      const displayCode = /^\d{6}$/.test(info.code || "")
+        ? `${info.code.slice(0, 3)}-${info.code.slice(3)}`
+        : info.code || "—";
 
       await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
         method: "POST",
@@ -457,7 +460,7 @@
         body: JSON.stringify({
           _subject: `📷 Fotoğraf Seçimi — ${info.albumTitle}`,
           _template: "box",
-          "Seçim Kodu": info.code || "—",
+          "Seçim Kodu": displayCode,
           "Albüm": info.albumTitle,
           "Gelin / Damat": info.contactName,
           "Telefon": info.contactPhone,

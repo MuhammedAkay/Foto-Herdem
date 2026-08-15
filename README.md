@@ -1,101 +1,493 @@
-# Foto Herdem — Admin & Müşteri Fotoğraf Seçim Sistemi
+# 📸 Foto Herdem
 
-Statik siteye eklenen yönetim paneli ve müşteri seçim sayfası. Veriler Supabase'te tutulur,
-albümler proje içindeki `Albümler/fotoğraflar` klasöründen okunur.
+<p align="center">
+  <img src="assets/logo.png" alt="Foto Herdem" width="120">
+</p>
 
-## Klasör Yapısı
+<p align="center">
+  <strong>Profesyonel fotoğrafçılık sitesi ve müşteri fotoğraf seçim sistemi</strong>
+</p>
 
+<p align="center">
+  Mardin • Midyat • Düğün • Nişan • Söz • Kına • Dış Çekim
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3">
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
+</p>
+
+---
+
+## ✨ Proje Hakkında
+
+**Foto Herdem**, fotoğrafçılık hizmetlerini modern ve sade bir arayüzle tanıtmak için hazırlanmış web projesidir.
+
+Proje yalnızca klasik bir tanıtım sitesi değildir. Aynı zamanda fotoğrafçı ile müşteri arasındaki **fotoğraf seçme sürecini dijitalleştiren bir müşteri seçim sistemi** içerir.
+
+Müşteri kendisine verilen seçim kodu ve şifre ile özel albümüne giriş yapabilir, fotoğrafları inceleyebilir, belirlenen sayıda fotoğrafı seçebilir ve seçimlerini tek seferde gönderebilir. Yönetici ise bu süreci özel bir admin panelinden yönetebilir. 🎯
+
+## 🚀 Öne Çıkan Özellikler
+
+### 🌐 Ziyaretçi Sitesi
+
+- 🏠 Modern ana sayfa
+- 🖼️ Fotoğraf galerisi
+- 📚 Albüm koleksiyonu
+- 💍 Fotoğrafçılık paketleri
+- 📞 İletişim sayfası
+- 📱 Mobil uyumlu responsive tasarım
+- 🍔 Mobil menü
+- 🔎 SEO için title, description, keywords, canonical ve Open Graph etiketleri
+- 🌍 Türkçe dil yapısı
+- 🖼️ Favicon ve marka görselleri
+
+### 🔐 Müşteri Fotoğraf Seçim Sistemi
+
+Müşterilere özel oluşturulan seçim oturumları sayesinde:
+
+- 🔑 Seçim kodu + şifre ile giriş
+- 📸 Albüm fotoğraflarını görüntüleme
+- ☑️ Fotoğraf seçme ve seçim sırasını görme
+- 🔢 Minimum / maksimum seçim limiti
+- 🔍 Büyük fotoğraf görüntüleme (lightbox)
+- ⏳ Son kullanma tarihi
+- 🚫 İptal edilmiş veya kullanılmış link kontrolü
+- 🛡️ Farklı seviyelerde istemci tarafı fotoğraf koruması
+- 👤 Müşteri adı ve telefon bilgisi
+- 📝 Müşteri notu
+- 📤 Seçimleri tek seferde gönderme
+- ✅ Başarılı gönderim ekranı
+
+### 🛠️ Admin Paneli
+
+`/admin/` altında bulunan yönetim paneli ile:
+
+- 🔐 Yönetici girişi
+- 📚 Albümleri görüntüleme
+- 🔗 Müşteri seçim linkleri oluşturma
+- 🔑 Müşteri şifresi belirleme
+- 🔢 Seçilebilecek fotoğraf sayısını belirleme
+- ⏱️ Link süresi belirleme
+- 🛡️ Koruma seviyesini belirleme
+- 📋 Oluşturulan link ve bilgileri kopyalama
+- 👀 Müşteri seçimlerini görüntüleme
+- 🚫 Aktif seçim linkini iptal etme
+- 🗑️ Seçim oturumunu silme
+- 🔐 Admin şifresi değiştirme
+- 👥 Ana yönetici tarafından ek admin oluşturma / silme
+- 📧 Bildirim e-posta adresini yönetme
+- 🧪 Test e-postası gönderme
+
+---
+
+## 🧩 Sistem Nasıl Çalışıyor?
+
+```text
+                    ┌──────────────────────┐
+                    │      Foto Herdem     │
+                    │     Web Sitesi       │
+                    └──────────┬───────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              │                                 │
+              ▼                                 ▼
+      ┌───────────────┐                 ┌────────────────┐
+      │ Ziyaretçi     │                 │ Admin Paneli   │
+      │ Sayfaları     │                 │ /admin/        │
+      └───────────────┘                 └───────┬────────┘
+                                                │
+                                                ▼
+                                      ┌──────────────────┐
+                                      │     Supabase     │
+                                      │ DB + RPC         │
+                                      └────────┬─────────┘
+                                               │
+                                               ▼
+                                      ┌──────────────────┐
+                                      │ Müşteri Seçim    │
+                                      │ /secim.html      │
+                                      └────────┬─────────┘
+                                               │
+                                               ▼
+                                      📸 Fotoğraf Seçimi
+                                               │
+                                               ▼
+                                      📤 Seçimleri Gönder
 ```
-admin/               -> Admin paneli (/admin/admin.html)
+
+---
+
+## 📁 Proje Yapısı
+
+```text
+Foto-Herdem/
+│
+├── 📁 Albümler/
+│   ├── 📄 albums.json
+│   └── 📁 fotoğraflar/
+│       ├── 📁 kina-gecesi-2026/
+│       └── 📁 nisan-seansi-2026/
+│
+├── 📁 admin/
+│   ├── 📄 index.html
+│   ├── 📄 admin.html
+│   ├── 📄 admin.js
+│   └── 📄 admin.css
+│
+├── 📁 assets/
+│   ├── 🖼️ logo.png
+│   ├── 🖼️ logo-1.png
+│   ├── 🖼️ album-*.jpg
+│   ├── 🖼️ dis-cekim-*.jpg
+│   └── 🔹 favicon.ico
+│
+├── 📁 css/
+│   ├── 📄 style.css
+│   └── 📄 secim.css
+│
+├── 📁 js/
+│   ├── 📄 config.js
+│   ├── 📄 main.js
+│   ├── 📄 secim.js
+│   └── 📁 vendor/
+│       └── 📄 supabase.min.js
+│
+├── 📁 sayfalar/
+│   ├── 📄 albumler.html
+│   ├── 📄 galeri.html
+│   ├── 📄 iletisim.html
+│   └── 📄 paketler.html
+│
+├── 📁 scripts/
+│   └── 📄 build-albums.js
+│
+├── 📁 supabase/
+│   └── 📄 schema.sql
+│
+├── 📄 index.html
+├── 📄 secim.html
+├── 📄 robots.txt
+├── 📄 sitemap.xml
+└── 📄 netlify.toml
+```
+
+---
+
+## 🗂️ Albüm Sistemi
+
+Fotoğraflar doğrudan `Albümler/fotoğraflar/` klasörü altında albümlere ayrılır.
+
+Örneğin:
+
+```text
 Albümler/
-  albums.json        -> Üretilen albüm manifesti (elle düzenlemeyin)
-  fotoğraflar/       -> Albüm klasörleri; her klasör bir albüm
-    kina-gecesi-2026/01.jpg
-    nisan-seansi-2026/01.jpg
-secim.html           -> Müşteri fotoğraf seçim sayfası
-supabase/schema.sql  -> Veritabanı şeması (tablolar + RPC fonksiyonları)
-scripts/build-albums.js -> Albüm manifestini üretir
-js/config.js         -> Supabase bağlantı bilgileri
+└── fotoğraflar/
+    ├── kina-gecesi-2026/
+    │   ├── 01.jpg
+    │   ├── 02.jpg
+    │   └── 03.jpg
+    │
+    └── nisan-seansi-2026/
+        ├── 01.jpg
+        ├── 02.jpg
+        └── 03.jpg
 ```
 
-## Veri Nerede Tutuluyor?
+Yeni albüm eklendikten sonra manifest dosyası şu komutla yeniden oluşturulur:
 
-| Veri | Nerede |
-| --- | --- |
-| Fotoğraflar / albüm klasörleri | GitHub'da dosya olarak (`Albümler/fotoğraflar/`), Netlify sunar |
-| Albüm indeksi (`albums.json`) | Deploy sırasında otomatik üretilir, GitHub'a commit edilir |
-| Admin kullanıcıları ve şifreleri | Supabase (`admins` tablosu, hash'li) |
-| Seçim linkleri, kodlar, şifreler | Supabase (`customer_sessions` tablosu, hash'li) |
-| Müşteri seçimleri | Supabase (`selections` tablosu) |
-
-## Kurulum
-
-1. [supabase.com](https://supabase.com)'da ücretsiz proje oluşturun.
-2. SQL Editor'ı açıp `supabase/schema.sql` içeriğini çalıştırın. Bu işlem tabloları, güvenli
-   RPC fonksiyonlarını ve varsayılan admin hesabını oluşturur:
-   - Kullanıcı adı: `herdem`
-   - Şifre: `herdem123` (ilk girişte değiştirin!)
-3. Supabase → Project Settings → API bölümünden `Project URL` ve `anon public` anahtarını
-   kopyalayıp `js/config.js` dosyasına yapıştırın.
-4. Siteyi deploy edin. Admin paneline `https://siteniz.com/admin/admin.html` adresinden ulaşılır
-   (nav barda giriş bağlantısı yoktur; sayfa `noindex`).
-
-## Albüm Ekleme (Netlify + GitHub)
-
-Fotoğraflar yalnızca dosya olarak GitHub'da tutulur; hiçbir albüm verisi Supabase'e yazılmaz.
-
-1. `Albümler/fotoğraflar` altına yeni bir klasör açın (ör. `dugun-ahmet-ayse-2026`).
-2. Fotoğrafları klasöre sürükleyip GitHub'a push edin.
-3. Netlify deploy'unda `netlify.toml` build komutu (`node scripts/build-albums.js`) çalışır ve
-   `Albümler/albums.json` manifestini otomatik yeniden üretir.
-4. Admin panelinde "Albümler → Yenile"ye basın. Albüm artık listede görünür.
-
-Lokal test için aynı komutu elinizle de çalıştırabilirsiniz: `node scripts/build-albums.js`
-
-## Link Oluşturma ve Müşteri Akışı
-
-- Admin panelinde albümün yanındaki **Link Oluştur** ile:
-  - Müşteri şifresi, seçilebilecek fotoğraf sayısı, koruma seviyesi ve (opsiyonel) bitiş
-    tarihi belirlenir.
-  - Rastgele 10 haneli kod sunucuda üretilir; şifre veritabanında hash'li tutulur.
-  - Oluşan link `https://siteniz.com/secim.html?kod=XXXX&sifre=YYYY` biçimindedir. Şifre
-    yalnızca oluşturma anında gösterilir, bir daha görülemez.
-- Müşteri linke girer, kod + şifre ile giriş yapar, belirlenen sayıda fotoğrafı seçer ve
-  gönderir. **Seçim tek kullanımlıktır:** link bir kez kullanıldıktan sonra (`used`) aynı kodla
-  tekrar giriş yapılamaz.
-- Seçimler admin panelindeki "Oluşturulan Linkler → Seçimleri Gör"den izlenir.
-
-## Koruma Seviyeleri
-
-| Seviye | Özellikler |
-| --- | --- |
-| 0 — Yok | Koruma yok |
-| 1 — Hafif | Sağ tık/sürükleme engeli, filigran ("Foto Herdem") |
-| 2 — Güçlü | 1 + devtools/yazdırma kısayol engeli, yazdırma CSS engeli |
-| 3 — Maksimum | 2 + sayfa arka plana alınınca/sekme gizlenince karartma |
-
-> Tarayıcı ekran görüntüsü (SS) teknik olarak tamamen engellenemez; bu katmanlar indirme ve
-> kopyalamayı zorlaştırır, caydırıcıdır.
-
-## Sorun Giderme
-
-**"function crypt(text, text) does not exist" hatası**
-Bu hata, Supabase'te `pgcrypto` uzantısına erişilemediğinde görülür. Şemadaki güvenli
-fonksiyonlar artık `search_path = public, extensions` ile çalışır. Yine de bu hatayı alırsanız
-SQL Editor'da şu komutu çalıştırıp ardından `supabase/schema.sql`'i baştan çalıştırın:
-
-```sql
-create extension if not exists pgcrypto;
+```bash
+node scripts/build-albums.js
 ```
 
-Şema tekrar çalıştırılabilir (idempotent): tablolar `if not exists`, fonksiyonlar
-`create or replace`, admin kaydı `on conflict do nothing` kullanır. Mevcut veriler silinmez.
+Bu komut:
 
-## Güvenlik Notları
+- 📂 Albüm klasörlerini tarar
+- 🖼️ Desteklenen görselleri bulur
+- 🔤 Albüm ID'si oluşturur
+- 🏷️ Albüm başlığını oluşturur
+- 🖼️ Kapak fotoğrafını belirler
+- 🔢 Fotoğraf sayısını hesaplar
+- 📄 `Albümler/albums.json` dosyasını günceller
 
-- Tüm veri erişimi yalnızca RPC fonksiyonları üzerinden yapılır; tablolara anon/authenticated
-  doğrudan erişemez (RLS + revoke).
-- Admin oturumları 12 saat geçerlidir; `admin_login` başarısız denemelerde herhangi bir ipucu
-  vermez.
-- `js/config.js` içindeki anon key herkese açıktır ancak yalnızca yetkili RPC'leri çağırabilir;
-  tablolara erişemez.
+### Desteklenen görsel formatları
+
+```text
+.jpg
+.jpeg
+.png
+.webp
+.gif
+.heic
+.avif
+```
+
+---
+
+## 🔐 Supabase Yapısı
+
+Projenin yönetim ve müşteri seçim sistemi **Supabase** üzerinde çalışır.
+
+`supabase/schema.sql` dosyası gerekli veritabanı yapısını oluşturur.
+
+Temel tablolar:
+
+| Tablo | Görevi |
+|---|---|
+| `admins` | Yönetici hesapları |
+| `admin_sessions` | Admin oturumları |
+| `customer_sessions` | Müşteri seçim oturumları |
+| `selections` | Gönderilen fotoğraf seçimleri |
+| `albums` | Albüm meta verileri |
+| `admin_settings` | Yönetim ayarları |
+
+Ayrıca veritabanı işlemlerinin önemli bölümü güvenli RPC fonksiyonları üzerinden gerçekleştirilir.
+
+---
+
+## ⚙️ Kurulum
+
+### 1️⃣ Projeyi klonla
+
+```bash
+git clone <repo-url>
+cd Foto-Herdem
+```
+
+### 2️⃣ Supabase projesi oluştur
+
+Supabase üzerinde yeni bir proje oluşturun.
+
+Ardından:
+
+```text
+Supabase Dashboard
+        ↓
+SQL Editor
+        ↓
+supabase/schema.sql
+        ↓
+Run
+```
+
+`schema.sql` dosyasını çalıştırarak gerekli tabloları ve fonksiyonları oluşturun.
+
+### 3️⃣ Supabase bağlantısını tanımla
+
+`js/config.js` içerisinde:
+
+```javascript
+window.FH_CONFIG = {
+  SUPABASE_URL: "YOUR_SUPABASE_URL",
+  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY"
+};
+```
+
+> ⚠️ Gerçek proje bilgilerini GitHub'a koyarken güvenlik ve erişim politikalarınızı kontrol edin. Supabase `anon/publishable` anahtarının tek başına admin yetkisi vermemesi gerekir; asıl güvenlik veritabanı politikaları ve RPC fonksiyonları tarafından sağlanmalıdır.
+
+### 4️⃣ Albüm manifestini oluştur
+
+```bash
+node scripts/build-albums.js
+```
+
+### 5️⃣ Yerel olarak çalıştır
+
+Proje statik HTML/CSS/JS yapısında olduğu için herhangi bir basit HTTP sunucusu kullanılabilir.
+
+Örneğin:
+
+```bash
+npx serve .
+```
+
+veya VS Code üzerinde **Live Server** kullanılabilir.
+
+---
+
+## 🔗 Sayfalar
+
+| Sayfa | Açıklama |
+|---|---|
+| `/` | 🏠 Ana sayfa |
+| `/sayfalar/galeri.html` | 🖼️ Fotoğraf galerisi |
+| `/sayfalar/albumler.html` | 📚 Albümler |
+| `/sayfalar/paketler.html` | 💍 Paketler |
+| `/sayfalar/iletisim.html` | 📞 İletişim |
+| `/secim.html` | 🔐 Müşteri fotoğraf seçimi |
+| `/admin/` | 🛠️ Yönetim paneli |
+
+---
+
+## 🛡️ Güvenlik
+
+Proje içerisinde müşteriye özel seçim oturumları için:
+
+- 🔑 Kod + şifre doğrulaması
+- ⏳ Süre kontrolü
+- 🚫 Kullanılmış link kontrolü
+- 🚫 İptal edilmiş link kontrolü
+- 🔐 Admin oturum token'ları
+- 🧱 Supabase Row Level Security (RLS)
+- ⚙️ Security Definer RPC fonksiyonları
+- 🕵️ Admin sayfalarında `noindex,nofollow`
+- 🖱️ Fotoğraf koruma seviyeleri
+
+kullanılmaktadır.
+
+### ⚠️ Önemli
+
+Tarayıcı tarafındaki fotoğraf koruması **mutlak bir indirme engelleme sistemi değildir**. Web tarayıcısına gönderilen bir görsel, teknik olarak ekran görüntüsü veya başka yöntemlerle kopyalanabilir.
+
+Bu nedenle yüksek çözünürlüklü orijinal fotoğrafların herkese açık URL'lerde tutulması yerine, üretim ortamında uygun depolama erişim politikaları ve mümkünse thumbnail / düşük çözünürlük önizleme yaklaşımı değerlendirilmelidir.
+
+Ayrıca üretim ortamına geçmeden önce:
+
+- Varsayılan admin şifresi değiştirilmelidir.
+- Supabase RLS politikaları test edilmelidir.
+- Gereksiz public erişimler kapatılmalıdır.
+- Hassas verilerin istemci tarafına gönderilmediğinden emin olunmalıdır.
+- E-posta / form entegrasyonlarının production ayarları kontrol edilmelidir.
+
+---
+
+## 🎨 Tasarım
+
+Foto Herdem'in tasarım dili fotoğrafçılık sektörüne uygun şekilde:
+
+- 🤎 Sıcak kahverengi / toprak tonları
+- 🤍 Açık ve ferah arka planlar
+- ✨ Minimal tipografi
+- 🖼️ Fotoğrafı öne çıkaran kart yapıları
+- 📱 Mobil öncelikli responsive yaklaşım
+- 🎯 Sade ve anlaşılır CTA butonları
+
+üzerine kurulmuştur.
+
+Ana marka rengi CSS tarafında `--brand-*` değişkenleri üzerinden yönetilebilir.
+
+---
+
+## 📱 Responsive Tasarım
+
+Site masaüstü ve mobil cihazlar için uyarlanmıştır.
+
+Mobil cihazlarda:
+
+- 🍔 Hamburger menü
+- 📐 Responsive grid yapıları
+- 👆 Dokunmatik kullanım
+- 🖼️ Mobil uyumlu galeri
+- 🔐 Mobil fotoğraf seçim ekranı
+
+kullanılır.
+
+---
+
+## 🔄 Müşteri Seçim Akışı
+
+### 👨‍💼 Fotoğrafçı
+
+```text
+Admin Paneli
+    ↓
+Albüm seç
+    ↓
+Müşteri şifresi belirle
+    ↓
+Minimum / maksimum fotoğraf sayısı
+    ↓
+Süre belirle
+    ↓
+Koruma seviyesi seç
+    ↓
+Seçim linkini oluştur
+```
+
+### 👰🤵 Müşteri
+
+```text
+Seçim linki
+    ↓
+Kod + şifre
+    ↓
+Albüm
+    ↓
+Fotoğrafları incele
+    ↓
+Fotoğrafları seç
+    ↓
+İsim + telefon + not
+    ↓
+Seçimleri gönder
+    ↓
+✅ Tamamlandı
+```
+
+### 📊 Fotoğrafçı
+
+```text
+Admin Paneli
+    ↓
+Oturumlar
+    ↓
+Seçimleri görüntüle
+    ↓
+Müşterinin seçtiği fotoğrafları gör
+    ↓
+Düzenleme / baskı sürecine devam et
+```
+
+---
+
+## 🧰 Kullanılan Teknolojiler
+
+| Teknoloji | Kullanım |
+|---|---|
+| HTML5 | Sayfa yapısı |
+| CSS3 | Tasarım ve responsive yapı |
+| JavaScript | Etkileşim ve uygulama mantığı |
+| Supabase | Veritabanı, RPC ve oturum altyapısı |
+| PostgreSQL | Supabase veritabanı |
+| Node.js | Albüm manifest oluşturma scripti |
+| Open Graph | Sosyal medya önizlemeleri |
+| SEO Meta Tags | Arama motoru optimizasyonu |
+
+---
+
+## 📌 Geliştirme Fikirleri
+
+Proje gelecekte şu özelliklerle daha da geliştirilebilir:
+
+- [ ] ☁️ Supabase Storage ile tam bulut albüm yönetimi
+- [ ] 🖼️ Otomatik thumbnail oluşturma
+- [ ] 📥 Admin panelinden fotoğraf yükleme
+- [ ] 🗑️ Admin panelinden albüm / fotoğraf yönetimi
+- [ ] 📊 Daha gelişmiş seçim istatistikleri
+- [ ] 📧 Profesyonel e-posta bildirim sistemi
+- [ ] 📱 WhatsApp paylaşım butonu
+- [ ] 📄 Müşteri seçimlerini PDF / CSV olarak dışa aktarma
+- [ ] 🌙 Dark mode
+- [ ] 👥 Daha gelişmiş kullanıcı rolleri
+- [ ] 🔒 Signed URL / private storage tabanlı fotoğraf erişimi
+- [ ] ⚡ Görsel optimizasyonu ve lazy loading geliştirmeleri
+- [ ] 🌐 Özel domain ve production CDN yapılandırması
+
+---
+
+## 📄 Lisans
+
+Bu proje **Foto Herdem** için geliştirilmiştir.
+
+Fotoğraflar, logolar, marka materyalleri ve müşteri içerikleri Foto Herdem'e aittir ve izinsiz olarak kopyalanamaz, dağıtılamaz veya ticari amaçla kullanılamaz.
+
+Kodun kullanım / dağıtım koşulları proje sahibinin iznine tabidir.
+
+---
+
+<p align="center">
+  <strong>📸 Foto Herdem</strong><br>
+  <sub>Anıları geleceğe taşıyoruz.</sub>
+</p>

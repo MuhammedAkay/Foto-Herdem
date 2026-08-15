@@ -83,11 +83,19 @@
 
   function selectionLink(code, password) {
     const base = new URL("../secim.html", location.href);
-    base.searchParams.set("kod", code);
+    base.searchParams.set("kod", formatCode(code));
     if (password) {
       base.searchParams.set("sifre", password);
     }
     return base.href;
+  }
+
+  function formatCode(code) {
+    const c = String(code || "").trim();
+    if (/^\d{6}$/.test(c)) {
+      return `${c.slice(0, 3)}-${c.slice(3)}`;
+    }
+    return c;
   }
 
   function sessionCopyText(code, password) {
@@ -96,7 +104,7 @@
       "📷 Foto Herdem — Fotoğraf Seçimi",
       "",
       `Seçim Linki: ${baseLink}`,
-      `Seçim Kodu: ${code}`,
+      `Seçim Kodu: ${formatCode(code)}`,
       `Şifre: ${password || "—"}`,
     ].join("\n");
   }
@@ -244,7 +252,7 @@
             <button class="btn btn-dark btn-sm" type="button" data-copy="${escapeAttr(fullLink)}">Linki Kopyala</button>
           </div>
           <div class="link-line">
-            <code>Kod: ${escapeHtml(data.code)}</code>
+            <code>Kod: ${escapeHtml(formatCode(data.code))}</code>
             <button class="btn btn-secondary btn-sm" type="button" data-copy="${escapeAttr(codeOnlyLink)}">Kodsuz Link</button>
           </div>
           <div class="link-line">
@@ -300,7 +308,7 @@
             <div class="admin-session-info">
               <h3>${escapeHtml(s.album_title)}</h3>
               <div class="admin-session-meta">
-                <span class="tag">Kod: ${escapeHtml(s.code)}</span>
+                <span class="tag">Kod: ${escapeHtml(formatCode(s.code))}</span>
                 <span class="tag">${rangeTag}</span>
                 <span class="tag">${escapeHtml(protection)}</span>
                 <span class="status-badge ${st.cls}">${st.text}</span>

@@ -150,7 +150,7 @@
     hint.textContent = `${state.albums.length} albüm, Albümler/fotoğraflar klasöründen okundu.`;
     list.innerHTML = state.albums
       .map((album) => {
-        const cover = state.photoUrl.get(album.cover) || "../assets/logo.png";
+        const cover = state.photoUrl.get(album.cover) || "../assets/logo-1.png";
         return `
           <article class="admin-album">
             <div class="admin-album-cover">

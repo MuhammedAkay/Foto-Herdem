@@ -38,6 +38,7 @@ create table if not exists public.customer_sessions (
   album_path text not null,
   album_title text not null,
   password_hash text not null,
+  password_plain text,
   max_selections int not null default 10 check (max_selections between 1 and 500),
   min_selections int not null default 0 check (min_selections between 0 and 500),
   protection_level int not null default 2 check (protection_level between 0 and 3),
@@ -56,6 +57,11 @@ alter table public.customer_sessions
 -- Mevcut kurulumlar için: min_selections sütununu ekle
 alter table public.customer_sessions
   add column if not exists min_selections int not null default 0;
+
+-- Mevcut kurulumlar için: password_plain sütununu ekle
+-- (admin panelinde şifreyi gizli şekilde görüntüleyebilmek için saklanır)
+alter table public.customer_sessions
+  add column if not exists password_plain text;
 
 create table if not exists public.selections (
   id uuid primary key default gen_random_uuid(),
@@ -403,20 +409,16 @@ begin
   where s.token = p_token;
 
   loop
-    v_code := (
-      select string_agg(
-        substr('abcdefghjkmnpqrstuvwxyz23456789', (floor(random() * 31) + 1)::int, 1), ''
-      )
-      from generate_series(1, 10)
-    );
+    -- 6 haneli rastgele kod (000001 gibi, baştaki sıfırlar korunur)
+    v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
     exit when not exists (select 1 from public.customer_sessions where code = v_code);
   end loop;
 
   insert into public.customer_sessions (
-    code, album_path, album_title, password_hash,
+    code, album_path, album_title, password_hash, password_plain,
     max_selections, min_selections, protection_level, expires_at, created_by
   ) values (
-    v_code, trim(p_album_path), trim(p_album_title), crypt(p_password, gen_salt('bf', 10)),
+    v_code, trim(p_album_path), trim(p_album_title), crypt(p_password, gen_salt('bf', 10)), p_password,
     p_max_selections, p_min_selections, p_protection_level, p_expires_at, v_admin_id
   )
   returning * into v_row;
@@ -445,6 +447,7 @@ begin
       'code', s.code,
       'album_path', s.album_path,
       'album_title', s.album_title,
+      'password', s.password_plain,
       'max_selections', s.max_selections,
       'min_selections', s.min_selections,
       'protection_level', s.protection_level,
@@ -577,7 +580,7 @@ declare
 begin
   select * into v_row
   from public.customer_sessions
-  where code = lower(trim(p_code));
+  where code = lower(trim(p_code)) or code = regexp_replace(trim(p_code), '\D', '', 'g');
 
   if v_row.id is null then
     return jsonb_build_object('error', 'not_found');
@@ -609,7 +612,8 @@ begin
     'max_selections', v_row.max_selections,
     'min_selections', v_row.min_selections,
     'protection_level', v_row.protection_level,
-    'expires_at', v_row.expires_at
+    'expires_at', v_row.expires_at,
+    'admin_email', (select value from public.admin_settings where key = 'admin_email')
   );
 end;
 $$;
@@ -720,3 +724,4 @@ on conflict (username) do nothing;
 
 -- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
 update public.admins set is_main = true where username = 'herdem';
+

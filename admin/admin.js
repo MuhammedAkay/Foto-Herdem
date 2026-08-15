@@ -90,11 +90,12 @@
     return base.href;
   }
 
-  function sessionCopyText(link, code, password) {
+  function sessionCopyText(code, password) {
+    const baseLink = new URL("../secim.html", location.href).href;
     return [
       "📷 Foto Herdem — Fotoğraf Seçimi",
       "",
-      `Seçim Linki: ${link}`,
+      `Seçim Linki: ${baseLink}`,
       `Seçim Kodu: ${code}`,
       `Şifre: ${password || "—"}`,
     ].join("\n");
@@ -233,7 +234,7 @@
 
       const fullLink = selectionLink(data.code, password);
       const codeOnlyLink = selectionLink(data.code, "");
-      const allInfo = sessionCopyText(fullLink, data.code, password);
+      const allInfo = sessionCopyText(data.code, password);
 
       $("#create-result").innerHTML = `
         <h3>Link Oluşturuldu 🎉</h3>
@@ -288,7 +289,7 @@
         const st = STATUS_LABELS[s.status] || STATUS_LABELS.active;
         const protection = PROTECTION_LABELS[s.protection_level] || "";
         const link = selectionLink(s.code, "");
-        const allInfo = sessionCopyText(link, s.code, s.password || "");
+        const allInfo = sessionCopyText(s.code, s.password || "");
         const hasSelections = (s.selection_count || 0) > 0;
         const rangeTag =
           s.min_selections > 0

@@ -437,13 +437,16 @@
 
   async function sendAdminNotification(info) {
     try {
-      const emailRes = await state.supabase.rpc("admin_get_email");
-      const adminEmail =
-        typeof emailRes?.data === "string"
-          ? emailRes.data
-          : typeof emailRes === "string"
-            ? emailRes
-            : "";
+      let adminEmail = state.session?.admin_email || "";
+      if (!adminEmail) {
+        const emailRes = await state.supabase.rpc("admin_get_email");
+        adminEmail =
+          typeof emailRes?.data === "string"
+            ? emailRes.data
+            : typeof emailRes === "string"
+              ? emailRes
+              : "";
+      }
       if (!adminEmail) return;
 
       const photoList = info.photoNames.map((p) => `• ${p}`).join("\n");
@@ -460,7 +463,7 @@
           "Telefon": info.contactPhone,
           "Not": info.note || "—",
           "Seçilen Fotoğraf Sayısı": String(info.photoNames.length),
-          "Seçilen Fotoğraf Dosyaları": photoList,
+          "Seçilen Fotoğraf Dosya Adları": photoList,
         }),
       });
     } catch (_) {

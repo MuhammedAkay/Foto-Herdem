@@ -554,7 +554,7 @@
     const input = $("#admin-email");
     const email = input ? input.value.trim() : "";
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Önce geçerli bir e-posta adresi girin ve Kaydet'e basın.");
+      alert("Önce geçerli bir e-posta adresi girin.");
       return;
     }
     const btn = $("#btn-test-email");
@@ -564,6 +564,10 @@
       btn.textContent = "Gönderiliyor…";
     }
     try {
+      // Bildirim e-postası seçim sayfasında veritabanından okunuyor:
+      // önce buraya kaydedelim ki seçim bildirimleri doğru adrese gitsin.
+      await rpc("admin_set_email", { p_token: token(), p_email: email });
+
       await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -574,10 +578,11 @@
         }),
       });
       alert(
-        "Test bildirimi gönderildi. İlk kullanımda formsubmit.co'dan gelen doğrulama bağlantısına tıklamayı unutmayın."
+        "Bildirim e-postası kaydedildi ve test bildirimi gönderildi. " +
+          "İlk kullanımda formsubmit.co'dan gelen doğrulama bağlantısına tıklamayı unutmayın."
       );
     } catch (err) {
-      alert(`Test bildirimi gönderilemedi: ${err.message}`);
+      alert(`E-posta kaydedilemedi veya test gönderilemedi: ${err.message}`);
     } finally {
       if (btn) {
         btn.disabled = false;

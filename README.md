@@ -1,7 +1,7 @@
 # 📸 Foto Herdem
 
 <p align="center">
-  <img src="assets/logo.png" alt="Foto Herdem" width="120">
+  <img src="assets/logo-1.png" alt="Foto Herdem" width="120">
 </p>
 
 <p align="center">
@@ -138,7 +138,7 @@ Foto-Herdem/
 │   └── 📄 admin.css
 │
 ├── 📁 assets/
-│   ├── 🖼️ logo.png
+│   ├── 🖼️ logo-1.png
 │   ├── 🖼️ logo-1.png
 │   ├── 🖼️ album-*.jpg
 │   ├── 🖼️ dis-cekim-*.jpg

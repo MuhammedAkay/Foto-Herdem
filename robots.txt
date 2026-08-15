@@ -3,4 +3,4 @@ Disallow: /admin/
 Disallow: /secim.html
 Disallow: /Albümler/
 
-Sitemap: https://fotoherdem.com/sitemap.xml
+Sitemap: https://fotoherdem.wasmer.app/sitemap.xml

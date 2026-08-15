@@ -430,18 +430,16 @@
     if (!list) return;
     try {
       const admins = (await rpc("admin_list_admins", { p_token: token() })) || [];
-      if (admins.length === 0) {
+      const activeAdmins = admins.filter((a) => a.is_active);
+      if (activeAdmins.length === 0) {
         list.innerHTML = `<div class="empty-state">Henüz admin yok.</div>`;
         return;
       }
-      list.innerHTML = admins
+      list.innerHTML = activeAdmins
         .map((a) => {
           const mainBadge = a.is_main
             ? `<span class="status-badge status-active">Ana Admin</span>`
             : "";
-          const inactiveBadge = a.is_active
-            ? ""
-            : `<span class="status-badge status-revoked">Silindi</span>`;
           const deleteBtn = a.is_main
             ? ""
             : `<button class="btn btn-danger btn-sm" type="button" data-delete-admin="${escapeAttr(a.id)}">Sil</button>`;
@@ -451,7 +449,6 @@
                 <strong>${escapeHtml(a.display_name || a.username)}</strong>
                 <span class="tag">@${escapeHtml(a.username)}</span>
                 ${mainBadge}
-                ${inactiveBadge}
               </div>
               <div class="admin-session-actions">${deleteBtn}</div>
             </article>`;

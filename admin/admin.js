@@ -90,6 +90,16 @@
     return base.href;
   }
 
+  function sessionCopyText(link, code, password) {
+    return [
+      "📷 Foto Herdem — Fotoğraf Seçimi",
+      "",
+      `Seçim Linki: ${link}`,
+      `Seçim Kodu: ${code}`,
+      `Şifre: ${password || "—"}`,
+    ].join("\n");
+  }
+
   // ---------- Albüm manifesti ----------
 
   async function loadAlbums() {
@@ -223,22 +233,30 @@
 
       const fullLink = selectionLink(data.code, password);
       const codeOnlyLink = selectionLink(data.code, "");
+      const allInfo = sessionCopyText(fullLink, data.code, password);
 
       $("#create-result").innerHTML = `
         <h3>Link Oluşturuldu 🎉</h3>
         <div class="link-box">
           <div class="link-line">
             <code>${escapeHtml(fullLink)}</code>
-            <button class="btn btn-dark btn-sm" type="button" data-copy="${escapeAttr(fullLink)}">Kopyala</button>
+            <button class="btn btn-dark btn-sm" type="button" data-copy="${escapeAttr(fullLink)}">Linki Kopyala</button>
           </div>
           <div class="link-line">
             <code>Kod: ${escapeHtml(data.code)}</code>
             <button class="btn btn-secondary btn-sm" type="button" data-copy="${escapeAttr(codeOnlyLink)}">Kodsuz Link</button>
           </div>
+          <div class="link-line">
+            <code>Şifre: ${escapeHtml(password)}</code>
+            <button class="btn btn-secondary btn-sm" type="button" data-copy="${escapeAttr(password)}">Şifreyi Kopyala</button>
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-primary" type="button" data-copy="${escapeAttr(allInfo)}">Tümünü Kopyala (Link + Kod + Şifre)</button>
         </div>
         <p class="admin-warning">
-          ⚠️ Şifre yalnızca burada görünür, bir daha gösterilmez. Linki ve şifreyi müşteriye
-          ayrı kanallardan iletmeniz önerilir.
+          ⚠️ Şifre ayrıca linkler listesinde gizli olarak saklanır (•••••• üzerine tıklayınca açılır).
+          Linki ve şifreyi müşteriye ayrı kanallardan iletmeniz önerilir.
         </p>`;
       $("#create-result").hidden = false;
       setStatus(form, "");
@@ -270,6 +288,7 @@
         const st = STATUS_LABELS[s.status] || STATUS_LABELS.active;
         const protection = PROTECTION_LABELS[s.protection_level] || "";
         const link = selectionLink(s.code, "");
+        const allInfo = sessionCopyText(link, s.code, s.password || "");
         const hasSelections = (s.selection_count || 0) > 0;
         const rangeTag =
           s.min_selections > 0
@@ -289,10 +308,15 @@
                 Oluşturulma: ${fmtDate(s.created_at)} · Bitiş: ${fmtDate(s.expires_at)} ·
                 Seçim: ${s.selection_count || 0}
               </div>
+              <div class="admin-session-password">
+                <span class="tag">Şifre:</span>
+                <button class="password-reveal" type="button" data-reveal-password="${escapeAttr(s.password || "")}" aria-label="Şifreyi göster/gizle">••••••</button>
+              </div>
             </div>
             <div class="admin-session-actions">
               ${s.status === "active" ? `<button class="btn btn-dark btn-sm" type="button" data-revoke="${escapeAttr(s.id)}">İptal Et</button>` : ""}
               <button class="btn btn-secondary btn-sm" type="button" data-copy-link="${escapeAttr(link)}">Linki Kopyala</button>
+              <button class="btn btn-secondary btn-sm" type="button" data-copy-info="${escapeAttr(allInfo)}">Bilgileri Kopyala</button>
               <button class="btn btn-primary btn-sm" type="button" data-selections="${escapeAttr(s.id)}" ${hasSelections ? "" : "disabled"}>Seçimleri Gör</button>
               <button class="btn btn-danger btn-sm" type="button" data-delete="${escapeAttr(s.id)}">Sil</button>
             </div>
@@ -642,9 +666,26 @@
         revokeSession(revoke.dataset.revoke);
         return;
       }
+      const reveal = e.target.closest("[data-reveal-password]");
+      if (reveal) {
+        const password = reveal.dataset.revealPassword;
+        if (reveal.dataset.open === "1") {
+          reveal.textContent = "••••••";
+          reveal.dataset.open = "0";
+        } else {
+          reveal.textContent = password || "—";
+          reveal.dataset.open = "1";
+        }
+        return;
+      }
       const copy = e.target.closest("[data-copy-link]");
       if (copy) {
         copyText(copy.dataset.copyLink, copy);
+        return;
+      }
+      const copyInfo = e.target.closest("[data-copy-info]");
+      if (copyInfo) {
+        copyText(copyInfo.dataset.copyInfo, copyInfo);
         return;
       }
       const selections = e.target.closest("[data-selections]");

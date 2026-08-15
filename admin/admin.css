@@ -359,6 +359,31 @@
   min-height: 28px;
 }
 
+.admin-session-password {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.password-reveal {
+  padding: 5px 12px;
+  border: 1px dashed rgba(71, 54, 43, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-dark);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.password-reveal:hover {
+  background: rgba(141, 92, 59, 0.1);
+  border-color: rgba(141, 92, 59, 0.5);
+}
+
 .admin-session-actions {
   display: flex;
   flex-wrap: wrap;

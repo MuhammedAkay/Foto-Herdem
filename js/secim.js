@@ -421,7 +421,7 @@
       }
       showSuccess(`Seçtiğiniz ${result.count} fotoğraf kaydedildi. Foto Herdem ekibi en kısa sürede sizinle iletişime geçecek.`);
       sendAdminNotification({
-        code: state.session.code,
+        code: state.session.code || $("#secim-code").value.trim(),
         albumTitle: state.session.album_title,
         contactName,
         contactPhone,
@@ -446,18 +446,21 @@
             : "";
       if (!adminEmail) return;
 
+      const photoList = info.photoNames.map((p) => `• ${p}`).join("\n");
+
       await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           _subject: `📷 Fotoğraf Seçimi — ${info.albumTitle}`,
-          "Seçim Kodu": info.code,
+          _template: "box",
+          "Seçim Kodu": info.code || "—",
           "Albüm": info.albumTitle,
           "Gelin / Damat": info.contactName,
           "Telefon": info.contactPhone,
           "Not": info.note || "—",
           "Seçilen Fotoğraf Sayısı": String(info.photoNames.length),
-          "Seçilen Fotoğraflar": info.photoNames.join("\n"),
+          "Seçilen Fotoğraf Dosyaları": photoList,
         }),
       });
     } catch (_) {

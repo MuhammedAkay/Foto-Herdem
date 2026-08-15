@@ -550,6 +550,42 @@
     }
   }
 
+  async function sendTestEmail() {
+    const input = $("#admin-email");
+    const email = input ? input.value.trim() : "";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Önce geçerli bir e-posta adresi girin ve Kaydet'e basın.");
+      return;
+    }
+    const btn = $("#btn-test-email");
+    const original = btn ? btn.textContent : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Gönderiliyor…";
+    }
+    try {
+      await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          _subject: "📷 Foto Herdem — Test Bildirimi",
+          _template: "box",
+          Mesaj: "Bu bir test bildirimidir. Bundan sonra müşteri seçim bildirimleri bu adrese iletilecek.",
+        }),
+      });
+      alert(
+        "Test bildirimi gönderildi. İlk kullanımda formsubmit.co'dan gelen doğrulama bağlantısına tıklamayı unutmayın."
+      );
+    } catch (err) {
+      alert(`Test bildirimi gönderilemedi: ${err.message}`);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+  }
+
   // ---------- Yardımcılar ----------
 
   function escapeHtml(value) {
@@ -631,6 +667,8 @@
       e.preventDefault();
       saveEmail(e.currentTarget);
     });
+
+    $("#btn-test-email").addEventListener("click", sendTestEmail);
 
     $("#admin-form").addEventListener("submit", (e) => {
       e.preventDefault();

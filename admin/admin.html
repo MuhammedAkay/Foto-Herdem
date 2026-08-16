@@ -62,7 +62,10 @@
           </div>
           <div class="field">
             <label for="login-password">Şifre</label>
-            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+            <div class="password-wrap">
+              <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="password-toggle" data-toggle-password="login-password" aria-label="Şifreyi göster" title="Göster/Gizle">👁</button>
+            </div>
           </div>
           <div class="form-status" data-status></div>
           <button class="btn btn-primary" type="submit">Giriş Yap</button>
@@ -194,7 +197,10 @@
             </div>
             <div class="field">
               <label for="new-admin-password">Şifre</label>
+              <div class="password-wrap">
               <input id="new-admin-password" name="password" type="password" minlength="6" required>
+              <button type="button" class="password-toggle" data-toggle-password="new-admin-password" aria-label="Şifreyi göster" title="Göster/Gizle">👁</button>
+            </div>
             </div>
             <div class="field">
               <label for="new-admin-name">Görünen Ad <span class="admin-muted">(opsiyonel)</span></label>
@@ -215,11 +221,17 @@
             <h3>Şifremi Değiştir</h3>
             <div class="field">
               <label for="old-password">Mevcut Şifre</label>
+              <div class="password-wrap">
               <input id="old-password" name="old_password" type="password" required>
+              <button type="button" class="password-toggle" data-toggle-password="old-password" aria-label="Şifreyi göster" title="Göster/Gizle">👁</button>
+            </div>
             </div>
             <div class="field">
               <label for="new-password">Yeni Şifre</label>
+              <div class="password-wrap">
               <input id="new-password" name="new_password" type="password" minlength="6" required>
+              <button type="button" class="password-toggle" data-toggle-password="new-password" aria-label="Şifreyi göster" title="Göster/Gizle">👁</button>
+            </div>
             </div>
             <div class="form-status" data-status></div>
             <button class="btn btn-dark btn-sm" type="submit">Güncelle</button>

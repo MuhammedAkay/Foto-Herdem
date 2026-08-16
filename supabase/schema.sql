@@ -548,9 +548,20 @@ language plpgsql
 security definer
 set search_path = public, extensions
 as $$
+declare
+  v_is_main boolean;
 begin
   if not public.admin_valid(p_token) then
     raise exception 'yetkisiz';
+  end if;
+
+  select a.is_main into v_is_main
+  from public.admin_sessions s
+  join public.admins a on a.id = s.admin_id
+  where s.token = p_token;
+
+  if not coalesce(v_is_main, false) then
+    raise exception 'yalnızca ana admin bildirim e-postasını değiştirebilir';
   end if;
 
   if p_email is null or length(trim(p_email)) < 5 or position('@' in p_email) = 0 then
@@ -724,4 +735,3 @@ on conflict (username) do nothing;
 
 -- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
 update public.admins set is_main = true where username = 'herdem';
-

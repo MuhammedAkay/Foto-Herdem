@@ -2,7 +2,6 @@
   "use strict";
 
   const CONFIG = window.FH_CONFIG || {};
-  const TOKEN_KEY = "fh_admin_token";
   const ALBUMS_MANIFEST = "../Albümler/albums.json";
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -11,6 +10,7 @@
   const state = {
     supabase: null,
     albums: [],
+    isMain: false,
     albumById: new Map(),
     photoUrl: new Map(),
     sessions: [],
@@ -31,7 +31,8 @@
     revoked: { text: "İptal", cls: "status-revoked" },
   };
 
-  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  let currentToken = "";
+  const token = () => currentToken;
 
   function fmtDate(value) {
     if (!value) return "—";
@@ -519,7 +520,7 @@
         setStatus(form, "Kullanıcı adı veya şifre hatalı.", true);
         return;
       }
-      localStorage.setItem(TOKEN_KEY, data.token);
+      currentToken = data.token;
       $("#admin-who").textContent = data.display_name || data.username;
       setStatus(form, "");
       form.reset();
@@ -535,7 +536,8 @@
     } catch (_) {
       // yerel oturum yine de temizlenir
     }
-    localStorage.removeItem(TOKEN_KEY);
+    currentToken = "";
+    $("#admin-who").textContent = "";
     show("login");
   }
 
@@ -543,16 +545,22 @@
     try {
       const me = await rpc("admin_me", { p_token: token() });
       if (!me) {
-        localStorage.removeItem(TOKEN_KEY);
+        currentToken = "";
         show("login");
         return;
       }
       $("#admin-who").textContent = me.display_name || me.username;
       show("dashboard");
-      $("#admins-panel").hidden = !me.is_main;
-      await Promise.all([loadAlbums(), loadSessions(), loadAdminEmail(), loadAdmins()]);
+      state.isMain = Boolean(me.is_main);
+      $("#admins-panel").hidden = !state.isMain;
+      $("#email-panel").hidden = !state.isMain;
+      const tasks = [loadAlbums(), loadSessions()];
+      if (state.isMain) {
+        tasks.push(loadAdminEmail(), loadAdmins());
+      }
+      await Promise.all(tasks);
     } catch (_) {
-      localStorage.removeItem(TOKEN_KEY);
+      currentToken = "";
       show("login");
     }
   }

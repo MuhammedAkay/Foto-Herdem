@@ -37,7 +37,10 @@
           </div>
           <div class="field">
             <label for="secim-password">Şifre</label>
-            <input id="secim-password" name="password" type="password" autocomplete="off" required>
+            <div class="password-wrap">
+              <input id="secim-password" name="password" type="password" autocomplete="off" required>
+              <button type="button" class="password-toggle" data-toggle-password="secim-password" aria-label="Şifreyi göster" title="Göster/Gizle">👁</button>
+            </div>
           </div>
           <div class="form-status" data-status></div>
           <button class="btn btn-primary" type="submit">Giriş Yap</button>

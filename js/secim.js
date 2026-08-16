@@ -511,6 +511,19 @@
       $("#secim-password").value = params.get("sifre");
     }
 
+
+    document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.togglePassword);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "🙈" : "👁";
+        btn.setAttribute("aria-label", show ? "Şifreyi gizle" : "Şifreyi göster");
+        input.focus();
+      });
+    });
+
     $("#secim-login-form").addEventListener("submit", (e) => {
       e.preventDefault();
       login(e.currentTarget);

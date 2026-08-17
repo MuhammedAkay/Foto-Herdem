@@ -1,0 +1,523 @@
+/* =========================================================
+   404 — Foto Herdem
+   Özel "Sayfa Bulunamadı" deneyimi
+   ========================================================= */
+
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(141, 92, 59, 0.08), transparent 34%),
+    radial-gradient(circle at 85% 75%, rgba(141, 92, 59, 0.06), transparent 34%),
+    var(--bg);
+  overflow-x: hidden;
+}
+
+.error-page .site-header {
+  position: relative;
+  z-index: 5;
+}
+
+.error-home-link {
+  margin-left: auto;
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 0.88rem;
+}
+
+.error-stage {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 70px 24px 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  isolation: isolate;
+}
+
+/* =========================================================
+   Görsel alan
+   ========================================================= */
+
+.error-visual {
+  position: relative;
+  width: min(100%, 420px);
+  min-height: 315px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.camera {
+  position: relative;
+  width: 180px;
+  height: 140px;
+  margin-bottom: 26px;
+  opacity: 0;
+  animation: camIn 0.7s 0.15s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes camIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cam-body {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 160px;
+  height: 100px;
+  transform: translateX(-50%);
+  background: linear-gradient(145deg, #4a3728, #3a2a1e);
+  border-radius: 18px;
+  box-shadow:
+    0 20px 50px rgba(58, 42, 30, .30),
+    inset 0 1px 0 rgba(255,255,255,.09);
+}
+
+.cam-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 60px;
+  height: 28px;
+  transform: translateX(-50%);
+  background: linear-gradient(145deg, #5a4436, #3a2a1e);
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Küçük gövde detayları */
+.cam-details {
+  position: absolute;
+  top: 17px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.14);
+}
+
+.cam-details-left {
+  left: 17px;
+}
+
+.cam-details-right {
+  right: 17px;
+}
+
+/* =========================================================
+   Lens
+   ========================================================= */
+
+.cam-lens {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 70px;
+  height: 70px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 32%, #5f4636 0 5%, transparent 6%),
+    radial-gradient(circle, #111 30%, #2d2018 60%, #4a3728 100%);
+  box-shadow:
+    0 0 0 4px #5a4436,
+    0 0 0 7px #3a2a1e,
+    inset 0 0 15px rgba(0,0,0,.55);
+  animation: lensFocus 1.5s .9s ease-in-out infinite;
+}
+
+.lens-reflection {
+  position: absolute;
+  top: 10px;
+  left: 13px;
+  width: 14px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+}
+
+@keyframes lensFocus {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.055);
+  }
+}
+
+.cam-shutter {
+  position: absolute;
+  top: -6px;
+  right: 38px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #c44, #a33);
+  box-shadow: 0 2px 6px rgba(200,60,60,.35);
+  animation: shutterPulse 1.8s 1.3s ease-in-out infinite;
+}
+
+@keyframes shutterPulse {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(.85); }
+  60% { transform: scale(1.05); }
+}
+
+/* =========================================================
+   Flaş
+   ========================================================= */
+
+.flash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #fff;
+  opacity: 0;
+  animation: flashBurst .45s 1.85s ease-out forwards;
+}
+
+@keyframes flashBurst {
+  0% {
+    opacity: .8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   Kamera üzerindeki hata işareti
+   ========================================================= */
+
+.cam-error {
+  position: absolute;
+  right: 9px;
+  bottom: 28px;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  background: #b64646;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 5px 14px rgba(120,30,30,.25);
+  opacity: 0;
+  animation: errorPop .4s 1.95s cubic-bezier(.2,1.4,.4,1) forwards;
+}
+
+@keyframes errorPop {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-20deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.18) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* =========================================================
+   Çıkan fotoğraf
+   ========================================================= */
+
+.photo-output {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 7px;
+  box-shadow:
+    0 12px 35px rgba(0,0,0,.12),
+    0 2px 8px rgba(0,0,0,.08);
+  opacity: 0;
+  animation: photoSlide .65s 2.05s cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+.photo-output::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 28px;
+  background: linear-gradient(135deg, var(--brand-soft), #f7ede2);
+  border-bottom: 1px solid var(--line);
+}
+
+.photo-code {
+  position: relative;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--brand);
+  margin-top: 8px;
+}
+
+.photo-text {
+  position: relative;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+@keyframes photoSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-42px) rotate(-4deg) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+/* =========================================================
+   Film dekorasyonu
+   ========================================================= */
+
+.film-strip {
+  position: absolute;
+  top: 16%;
+  right: 2%;
+  width: 40px;
+  opacity: 0;
+  transform: rotate(4deg);
+  animation: floatDeco .6s 2.8s ease-out forwards;
+}
+
+.film-strip span {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(141,92,59,.11);
+  border-radius: 4px;
+  background: rgba(141,92,59,.08);
+}
+
+.film-strip span:nth-child(2) {
+  opacity: .7;
+}
+
+.film-strip span:nth-child(3) {
+  opacity: .4;
+}
+
+@keyframes floatDeco {
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(4deg);
+  }
+}
+
+/* =========================================================
+   Mesaj
+   ========================================================= */
+
+.error-message {
+  max-width: 560px;
+  opacity: 0;
+  animation: msgFade .6s 2.45s ease-out forwards;
+}
+
+.error-eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--brand);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.error-message h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.08;
+  letter-spacing: -.035em;
+}
+
+.error-message p {
+  max-width: 500px;
+  margin: 16px auto 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+@keyframes msgFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   Butonlar
+   ========================================================= */
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+  opacity: 0;
+  animation: msgFade .6s 2.7s ease-out forwards;
+}
+
+.error-actions .btn {
+  min-width: 165px;
+}
+
+/* Klavye kullanıcıları için görünür focus */
+.error-page a:focus-visible {
+  outline: 3px solid rgba(141,92,59,.35);
+  outline-offset: 4px;
+}
+
+/* =========================================================
+   Mobil
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .error-stage {
+    padding: 48px 20px 65px;
+  }
+
+  .error-visual {
+    min-height: 285px;
+  }
+
+  .camera {
+    width: 150px;
+    height: 118px;
+  }
+
+  .cam-body {
+    width: 136px;
+    height: 86px;
+    border-radius: 15px;
+  }
+
+  .cam-top {
+    width: 52px;
+    height: 24px;
+  }
+
+  .cam-lens {
+    width: 60px;
+    height: 60px;
+    bottom: 14px;
+  }
+
+  .photo-output {
+    width: 175px;
+    height: 132px;
+  }
+
+  .photo-code {
+    font-size: 2.7rem;
+  }
+
+  .film-strip {
+    right: -2px;
+    top: 17%;
+    transform: scale(.8) rotate(4deg);
+  }
+
+  .error-message h1 {
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .error-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .error-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .error-home-link {
+    padding: 0 13px;
+  }
+
+  .error-home-link {
+    font-size: .82rem;
+  }
+
+  .error-visual {
+    min-height: 265px;
+  }
+
+  .film-strip {
+    display: none;
+  }
+}
+
+/* =========================================================
+   Hareket azaltma — erişilebilirlik
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .camera,
+  .cam-lens,
+  .cam-shutter,
+  .cam-error,
+  .flash-overlay,
+  .photo-output,
+  .film-strip,
+  .error-message,
+  .error-actions {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .flash-overlay {
+    display: none;
+  }
+}

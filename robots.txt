@@ -2,5 +2,6 @@ User-agent: *
 Disallow: /admin/
 Disallow: /secim.html
 Disallow: /Albümler/
+Disallow: /404.html
 
 Sitemap: https://fotoherdem.wasmer.app/sitemap.xml

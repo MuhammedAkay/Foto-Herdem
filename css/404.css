@@ -1,6 +1,6 @@
 /* =========================================================
    404 — Foto Herdem
-   Özel "Sayfa Bulunamadı" deneyimi
+   Gerçekçi Fotoğraf Makinesi Animasyonu
    ========================================================= */
 
 .error-page {
@@ -8,22 +8,19 @@
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at 15% 20%, rgba(141, 92, 59, 0.08), transparent 34%),
-    radial-gradient(circle at 85% 75%, rgba(141, 92, 59, 0.06), transparent 34%),
+    radial-gradient(circle at 15% 20%, rgba(141,92,59,.08), transparent 34%),
+    radial-gradient(circle at 85% 75%, rgba(141,92,59,.06), transparent 34%),
     var(--bg);
   overflow-x: hidden;
 }
 
-.error-page .site-header {
-  position: relative;
-  z-index: 5;
-}
+.error-page .site-header { position: relative; z-index: 5; }
 
 .error-home-link {
   margin-left: auto;
   min-height: 40px;
   padding: 0 18px;
-  font-size: 0.88rem;
+  font-size: .88rem;
 }
 
 .error-stage {
@@ -42,143 +39,270 @@
 }
 
 /* =========================================================
-   Görsel alan
+   Görsel alan — süzülme burada
    ========================================================= */
 
 .error-visual {
   position: relative;
-  width: min(100%, 420px);
-  min-height: 315px;
+  width: min(100%, 440px);
+  min-height: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  animation: camFloat 3s 1.5s ease-in-out infinite;
+}
+
+@keyframes camFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 
 /* =========================================================
-   Fotoğraf Makinesi
+   FOTOĞRAF MAKİNESİ
    ========================================================= */
 
 .camera {
   position: relative;
-  width: 180px;
-  height: 140px;
-  margin-bottom: 26px;
+  width: 220px;
+  height: 165px;
+  margin-bottom: 30px;
   opacity: 0;
   animation: camIn 1.0s 0.25s cubic-bezier(.2,.8,.2,1) forwards;
 }
 
+/* Sınıf eklendiğinde sarsılma (JS ile 2.75s'te) */
+.camera.shake {
+  animation:
+    camIn 1.0s 0.25s cubic-bezier(.2,.8,.2,1) forwards,
+    camShake .35s ease-out;
+}
+
 @keyframes camIn {
-  from { opacity: 0; transform: translateY(28px) scale(.9); }
+  from { opacity: 0; transform: translateY(30px) scale(.88); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Gövde */
-.cam-body {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 160px;
-  height: 112px;
-  transform: translateX(-50%);
-  background:
-    linear-gradient(175deg, #5c4535 0%, #4a3728 30%, #3a2a1e 70%, #2c1e14 100%);
-  border-radius: 18px;
-  box-shadow:
-    0 20px 50px rgba(58, 42, 30, .35),
-    inset 0 2px 0 rgba(255,255,255,.08),
-    inset 0 -4px 10px rgba(0,0,0,.2);
+@keyframes camShake {
+  0%   { transform: rotate(0) translateX(0); }
+  15%  { transform: rotate(-2deg) translateX(-3px); }
+  30%  { transform: rotate(1.5deg) translateX(2px); }
+  50%  { transform: rotate(-1deg) translateX(-1px); }
+  70%  { transform: rotate(.5deg) translateX(1px); }
+  100% { transform: rotate(0) translateX(0); }
 }
 
-/* Üst parça (viewfinder) */
+/* -- Üst parça -- */
 .cam-top {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 60px;
-  height: 28px;
+  width: 130px;
+  height: 34px;
   transform: translateX(-50%);
   background:
-    linear-gradient(175deg, #5c4535 0%, #4a3728 60%, #3a2a1e 100%);
-  border-radius: 8px 8px 0 0;
+    linear-gradient(175deg, #5c4535 0%, #4a3728 50%, #3a2a1e 100%);
+  border-radius: 10px 12px 0 0;
   box-shadow:
     inset 0 2px 0 rgba(255,255,255,.06),
-    0 -2px 6px rgba(0,0,0,.12);
+    0 -2px 8px rgba(0,0,0,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-/* Küçük gövde detayları */
-.cam-details {
+.cam-hotshoe {
+  width: 22px;
+  height: 8px;
+  background: linear-gradient(180deg, #7a6a5a, #5a4a3a);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 1px 2px rgba(0,0,0,.2);
+}
+
+.cam-viewfinder {
+  width: 30px;
+  height: 20px;
+  background: linear-gradient(160deg, #1a1410, #0a0806);
+  border-radius: 4px;
+  border: 2px solid #4a3728;
+  box-shadow: inset 0 0 6px rgba(0,0,0,.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.cam-viewfinder::after {
+  content: "";
   position: absolute;
-  top: 17px;
+  top: 2px; left: 3px;
+  width: 7px; height: 4px;
+  border-radius: 50%;
+  background: rgba(160,200,240,.1);
+  transform: rotate(-12deg);
+}
+
+.cam-dial {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 0deg,
+      #6a5a4a, #5c4a3a 30deg, #6a5a4a 60deg,
+      #5c4a3a 90deg, #6a5a4a 120deg, #5c4a3a 150deg,
+      #6a5a4a 180deg, #5c4a3a 210deg, #6a5a4a 240deg,
+      #5c4a3a 270deg, #6a5a4a 300deg, #5c4a3a 330deg,
+      #6a5a4a
+    );
+  box-shadow: 0 1px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+  position: relative;
+}
+
+.cam-dial-dot {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #3a2a1e;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.5);
+}
+
+/* -- Ana gövde -- */
+.cam-body {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 200px;
+  height: 131px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(175deg, #5c4535 0%, #4a3728 25%, #3a2a1e 65%, #2c1e14 100%);
+  border-radius: 16px 20px 14px 14px;
+  box-shadow:
+    0 24px 60px rgba(58,42,30,.35),
+    inset 0 2px 0 rgba(255,255,255,.07),
+    inset 0 -4px 12px rgba(0,0,0,.25);
+}
+
+.cam-brand {
+  position: absolute;
+  top: 12px; left: 16px;
+  z-index: 2;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.18);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* LED ışık — daha görünür */
+.cam-led {
+  position: absolute;
+  top: 13px; right: 16px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255,255,255,.14);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.3);
+  background: #3d3;
+  box-shadow:
+    0 0 4px #3d3,
+    0 0 10px rgba(51,221,51,.6),
+    0 0 20px rgba(51,221,51,.3);
+  animation: ledBlink 2s 1.5s ease-in-out infinite;
 }
 
-.cam-details-left {
-  left: 17px;
+@keyframes ledBlink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px #3d3, 0 0 10px rgba(51,221,51,.6), 0 0 20px rgba(51,221,51,.3); }
+  50%      { opacity: .4; box-shadow: 0 0 2px #3d3, 0 0 4px rgba(51,221,51,.3); }
 }
 
-.cam-details-right {
-  right: 17px;
+/* Tutma yeri */
+.cam-grip {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 44px;
+  height: 121px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 1px, transparent 1px, transparent 4px),
+    linear-gradient(175deg, #4a3728, #2c1e14);
+  border-radius: 0 14px 12px 0;
+  box-shadow: inset -3px 0 8px rgba(0,0,0,.2), 2px 0 6px rgba(0,0,0,.08);
 }
 
 /* =========================================================
-   Lens
+   LENS
    ========================================================= */
 
-.cam-lens {
+.cam-lens-outer {
   position: absolute;
   left: 50%;
-  bottom: 18px;
-  width: 70px;
-  height: 70px;
-  transform: translateX(-50%);
+  bottom: 16px;
+  transform: translateX(-58%);
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 36% 32%, #5f4636 0 5%, transparent 6%),
-    radial-gradient(circle, #0a0a0a 28%, #1a1410 45%, #2d2018 65%, #4a3728 100%);
+  background: radial-gradient(circle, #3a2c20 0%, #2c1e14 50%, #1a1210 100%);
   box-shadow:
     0 0 0 3px #6a5446,
     0 0 0 5px #4a3a2c,
     0 0 0 8px #3a2a1e,
     0 0 0 10px #2c1e14,
-    inset 0 0 20px rgba(0,0,0,.6),
-    inset 0 2px 4px rgba(255,255,255,.05);
+    0 0 0 12px rgba(44,30,20,.5),
+    inset 0 0 25px rgba(0,0,0,.5);
   animation: lensFocus 2.2s 1.2s ease-in-out 1;
 }
 
-.lens-reflection {
+.cam-lens-mid {
   position: absolute;
-  top: 10px;
-  left: 12px;
-  width: 16px;
-  height: 10px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: rgba(255,255,255,.18);
-  transform: rotate(-15deg);
+  background: radial-gradient(circle, #2a2018 0%, #1a1410 60%, #0d0a07 100%);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.04), inset 0 0 15px rgba(0,0,0,.6);
 }
 
-.lens-reflection::after {
-  content: "";
+.cam-lens-inner {
   position: absolute;
-  bottom: 16px;
-  right: 8px;
-  width: 6px;
-  height: 4px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: rgba(200, 220, 255, .1);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(100,160,220,.12), rgba(60,40,30,.2) 35%, #0a0a0a 65%, #050505 100%);
+  box-shadow: inset 0 0 10px rgba(0,0,0,.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.lens-flare {
+  position: absolute;
+  top: 6px; left: 8px;
+  width: 14px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  transform: rotate(-18deg);
+}
+
+.lens-flare-2 {
+  position: absolute;
+  bottom: 8px; right: 6px;
+  width: 5px; height: 3px;
+  border-radius: 50%;
+  background: rgba(180,210,240,.1);
 }
 
 @keyframes lensFocus {
-  0%, 100% { transform: translateX(-50%) scale(1); }
-  50%      { transform: translateX(-50%) scale(1.055); }
+  0%, 100% { transform: translateX(-58%) scale(1); }
+  50%      { transform: translateX(-58%) scale(1.04); }
 }
 
 /* =========================================================
-   Flaş
+   FLAŞ
    ========================================================= */
 
 .flash-overlay {
@@ -186,103 +310,110 @@
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  background: #fff;
+  background: radial-gradient(circle at 50% 40%, #fff, rgba(255,240,220,.8));
   opacity: 0;
   animation: flashBurst .6s 2.8s ease-out forwards;
 }
 
 @keyframes flashBurst {
-  0%   { opacity: .8; }
+  0%   { opacity: .85; }
+  20%  { opacity: .6; }
   100% { opacity: 0; }
 }
 
 /* =========================================================
-   Çıkan fotoğraf
+   ÇIKAN FOTOĞRAF
    ========================================================= */
 
 .photo-output {
   position: relative;
-  width: 200px;
-  height: 150px;
+  width: 190px;
+  height: 148px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #fff;
-  border-radius: 7px;
-  box-shadow:
-    0 12px 35px rgba(0,0,0,.12),
-    0 2px 8px rgba(0,0,0,.08);
+  background: #fffef9;
+  border-radius: 5px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
   opacity: 0;
   animation: photoSlide .8s 3.0s cubic-bezier(.2,.9,.2,1) forwards;
 }
 
-.photo-output::before {
-  content: "";
+.photo-top-bar {
   position: absolute;
-  inset: 0 0 auto;
-  height: 28px;
-  background: linear-gradient(135deg, var(--brand-soft), #f7ede2);
+  top: 0; left: 0; right: 0;
+  height: 22px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(141,92,59,.04) 3px, rgba(141,92,59,.04) 4px),
+    linear-gradient(135deg, #f5ebe2, #f0dfd1);
   border-bottom: 1px solid var(--line);
+}
+
+.photo-bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  background: #fffef9;
+  border-top: 1px solid rgba(71,54,43,.05);
 }
 
 .photo-code {
   position: relative;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 3.2rem;
+  font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   color: var(--brand);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .photo-text {
   position: relative;
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--muted);
-  font-size: .82rem;
+  font-size: .8rem;
 }
 
 @keyframes photoSlide {
-  from { opacity: 0; transform: translateY(-42px) rotate(-4deg) scale(.96); }
+  from { opacity: 0; transform: translateY(-45px) rotate(-5deg) scale(.95); }
+  60%  { opacity: 1; transform: translateY(4px) rotate(1deg) scale(1.01); }
   to   { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
 }
 
 /* =========================================================
-   Film dekorasyonu
+   FİLM
    ========================================================= */
 
 .film-strip {
   position: absolute;
-  top: 16%;
-  right: 2%;
-  width: 40px;
+  top: 14%; right: 2%;
+  width: 38px;
   opacity: 0;
-  transform: rotate(4deg);
+  transform: rotate(5deg);
   animation: floatDeco .8s 3.8s ease-out forwards;
 }
 
 .film-strip span {
   display: block;
-  width: 100%;
-  height: 32px;
-  margin-bottom: 6px;
-  border: 1px solid rgba(141,92,59,.11);
+  width: 100%; height: 30px;
+  margin-bottom: 5px;
+  border: 1px solid rgba(141,92,59,.1);
   border-radius: 4px;
-  background: rgba(141,92,59,.08);
+  background: rgba(141,92,59,.06);
 }
 
-.film-strip span:nth-child(2) { opacity: .7; }
-.film-strip span:nth-child(3) { opacity: .4; }
+.film-strip span:nth-child(2) { opacity: .6; }
+.film-strip span:nth-child(3) { opacity: .3; }
 
 @keyframes floatDeco {
-  from { opacity: 0; transform: translateY(18px) rotate(4deg); }
-  to   { opacity: 1; transform: translateY(0) rotate(4deg); }
+  from { opacity: 0; transform: translateY(16px) rotate(5deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(5deg); }
 }
 
 /* =========================================================
-   Mesaj
+   MESAJ
    ========================================================= */
 
 .error-message {
@@ -324,7 +455,7 @@
 }
 
 /* =========================================================
-   Butonlar
+   BUTONLAR
    ========================================================= */
 
 .error-actions {
@@ -341,120 +472,81 @@
   min-width: 0;
   min-height: 44px;
   padding: 0 22px;
-  font-size: 0.92rem;
+  font-size: .92rem;
 }
 
-/* Klavye kullanıcıları için görünür focus */
 .error-page a:focus-visible {
   outline: 3px solid rgba(141,92,59,.35);
   outline-offset: 4px;
 }
 
 /* =========================================================
-   Mobil
+   MOBİL
    ========================================================= */
 
 @media (max-width: 600px) {
-  .error-stage {
-    padding: 48px 20px 65px;
-  }
+  .error-stage { padding: 48px 20px 65px; }
+  .error-visual { min-height: 300px; }
 
-  .error-visual {
-    min-height: 285px;
-  }
+  .camera { width: 180px; height: 136px; }
+  .cam-body { width: 164px; height: 108px; border-radius: 14px; }
+  .cam-top { width: 108px; height: 28px; }
+  .cam-hotshoe { width: 18px; height: 6px; }
+  .cam-viewfinder { width: 24px; height: 16px; }
+  .cam-dial { width: 20px; height: 20px; }
+  .cam-brand { font-size: .5rem; top: 10px; left: 12px; }
+  .cam-grip { width: 36px; height: 100px; }
+  .cam-led { width: 6px; height: 6px; top: 11px; right: 12px; }
 
-  .camera {
-    width: 150px;
-    height: 118px;
-  }
+  .cam-lens-outer { width: 78px; height: 78px; bottom: 14px; }
+  .cam-lens-mid { width: 56px; height: 56px; }
+  .cam-lens-inner { width: 36px; height: 36px; }
 
-  .cam-body {
-    width: 136px;
-    height: 96px;
-    border-radius: 15px;
-  }
+  .photo-output { width: 165px; height: 128px; }
+  .photo-code { font-size: 2.5rem; }
 
-  .cam-top {
-    width: 52px;
-    height: 24px;
-  }
-
-  .cam-lens {
-    width: 60px;
-    height: 60px;
-    bottom: 14px;
-  }
-
-  .photo-output {
-    width: 175px;
-    height: 132px;
-  }
-
-  .photo-code {
-    font-size: 2.7rem;
-  }
-
-  .film-strip {
-    right: -2px;
-    top: 17%;
-    transform: scale(.8) rotate(4deg);
+  .error-actions { gap: 10px; }
+  .error-actions .btn {
+    min-height: 42px;
+    padding: 0 20px;
+    font-size: .88rem;
   }
 
   .error-message h1 {
     font-size: clamp(1.8rem, 9vw, 2.5rem);
   }
-
-  .error-actions {
-    gap: 10px;
-  }
-
-  .error-actions .btn {
-    min-height: 42px;
-    padding: 0 20px;
-    font-size: 0.88rem;
-  }
 }
 
 @media (max-width: 400px) {
-  .error-home-link {
-    padding: 0 13px;
-    font-size: .82rem;
-  }
+  .error-home-link { padding: 0 13px; font-size: .82rem; }
+  .error-visual { min-height: 270px; }
+  .film-strip { display: none; }
 
   .error-actions .btn {
     min-height: 40px;
     padding: 0 18px;
-    font-size: 0.85rem;
-  }
-
-  .error-visual {
-    min-height: 265px;
-  }
-
-  .film-strip {
-    display: none;
+    font-size: .85rem;
   }
 }
 
 /* =========================================================
-   Hareket azaltma — erişilebilirlik
+   HAREKET AZALTMA
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+  .error-visual,
   .camera,
-  .cam-lens,
+  .cam-lens-outer,
+  .cam-led,
   .flash-overlay,
   .photo-output,
   .film-strip,
   .error-message,
   .error-actions {
-    animation: none;
+    animation: none !important;
     opacity: 1;
     transform: none;
   }
-
-  .flash-overlay {
-    display: none;
-  }
+  .flash-overlay { display: none; }
 }
 

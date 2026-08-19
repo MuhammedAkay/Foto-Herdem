@@ -730,8 +730,9 @@ grant execute on function public.customer_submit_selection(uuid, text[], text, t
 -- -------------------------------------------------------------
 
 insert into public.admins (username, password_hash, display_name, is_main)
-values ('admin@muhammed', crypt('herdem123', gen_salt('bf', 10)), 'Muhammed A.', true)
+values ('herdem', crypt('herdem123', gen_salt('bf', 10)), 'Foto Herdem Admin', true)
 on conflict (username) do nothing;
 
 -- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
-update public.admins set is_main = true where username = 'admin@muhammed';
+update public.admins set is_main = true where username = 'herdem';
+

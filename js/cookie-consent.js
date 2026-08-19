@@ -43,7 +43,9 @@
     iframe.style.display = "none";
     iframe.style.visibility = "hidden";
     document.body.insertBefore(iframe, document.body.firstChild);
+
   }
+
 
   /* Banner stilleri enjekte et */
   function injectStyles() {
@@ -152,4 +154,3 @@
 
   init();
 })();
-

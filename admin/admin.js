@@ -183,10 +183,10 @@
   function openCreatePanel(albumId) {
     const album = state.albumById.get(albumId);
     if (!album) return;
-    fillAlbumSelect(albumId);
     $("#create-panel").hidden = false;
     $("#create-result").hidden = true;
     $("#create-form").reset();
+    fillAlbumSelect(albumId);
     $("#create-password").value = "";
     const max = $("#create-max");
     max.value = album.photoCount < 10 ? String(album.photoCount) : "10";
@@ -315,8 +315,8 @@
                 <span class="status-badge ${st.cls}">${st.text}</span>
               </div>
               <div class="admin-hint">
-                Oluşturulma: ${fmtDate(s.created_at)} · Bitiş: ${fmtDate(s.expires_at)} ·
-                Seçim: ${s.selection_count || 0}
+                Oluşturulma: ${fmtDate(s.created_at)} · Bitiş: ${fmtDate(s.expires_at)}<br>
+                İzin Verilen: ${rangeTag} · Yapılan Seçim: ${s.selection_count || 0}
               </div>
               <div class="admin-session-password">
                 <span class="tag">Şifre:</span>
@@ -784,3 +784,4 @@
 
   document.addEventListener("DOMContentLoaded", init);
 })();
+

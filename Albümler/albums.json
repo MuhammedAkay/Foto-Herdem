@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T23:02:27.120Z",
+  "generatedAt": "2026-08-21T23:03:09.721Z",
   "albumFolder": "fotoğraflar",
   "albums": [
     {
@@ -24,6 +24,20 @@
         "fotoğraflar/nisan-seansı-2026/01.jpg",
         "fotoğraflar/nisan-seansı-2026/02.jpg",
         "fotoğraflar/nisan-seansı-2026/03.jpg"
+      ]
+    },
+    {
+      "id": "test-2026",
+      "title": "Test 2026",
+      "path": "fotoğraflar/test-2026",
+      "cover": "fotoğraflar/test-2026/dis-cekim-1.webp",
+      "photoCount": 5,
+      "photos": [
+        "fotoğraflar/test-2026/dis-cekim-1.webp",
+        "fotoğraflar/test-2026/dis-cekim-2.webp",
+        "fotoğraflar/test-2026/dis-cekim-3.webp",
+        "fotoğraflar/test-2026/dis-cekim-4.webp",
+        "fotoğraflar/test-2026/dis-cekim-10.webp"
       ]
     }
   ]

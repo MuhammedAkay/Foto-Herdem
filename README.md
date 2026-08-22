@@ -125,11 +125,15 @@ Müşterilere özel oluşturulan seçim oturumları sayesinde:
 ```text
 Foto-Herdem/
 │
+├── 📁 .github/
+│   └── 📁 workflows/
+│       └── 📄 build-albums.yml
+│
 ├── 📁 Albümler/
 │   ├── 📄 albums.json
 │   └── 📁 fotoğraflar/
-│       ├── 📁 kina-gecesi-2026/
-│       └── 📁 nisan-seansi-2026/
+│       ├── 📁 örnek-düğün-2026/
+│       └── 📁 örnek-nişan-2026/
 │
 ├── 📁 admin/
 │   ├── 📄 index.html
@@ -139,24 +143,33 @@ Foto-Herdem/
 │
 ├── 📁 assets/
 │   ├── 🖼️ logo.webp
-│   ├── 🖼️ logo.webp
 │   ├── 🖼️ album-*.webp
 │   ├── 🖼️ dis-cekim-*.webp
-│   └── 🔹 favicon.ico
+│   └── 📁 favicon/
+│       ├── 📄 favicon.ico
+│       ├── 🖼️ apple-touch-icon.png
+│       ├── 🖼️ android-icon-*.png
+│       ├── 🖼️ apple-icon-*.png
+│       ├── 🖼️ favicon-*.png
+│       └── 🖼️ ms-icon-*.png
 │
 ├── 📁 css/
 │   ├── 📄 style.css
-│   └── 📄 secim.css
+│   ├── 📄 secim.css
+│   └── 📄 404.css
 │
 ├── 📁 js/
 │   ├── 📄 config.js
 │   ├── 📄 main.js
 │   ├── 📄 secim.js
+│   ├── 📄 analytics.js
+│   ├── 📄 cookie-consent.js
 │   └── 📁 vendor/
 │       └── 📄 supabase.min.js
 │
 ├── 📁 sayfalar/
 │   ├── 📄 albumler.html
+│   ├── 📄 cerex-politikasi.html
 │   ├── 📄 galeri.html
 │   ├── 📄 iletisim.html
 │   └── 📄 paketler.html
@@ -168,10 +181,13 @@ Foto-Herdem/
 │   └── 📄 schema.sql
 │
 ├── 📄 index.html
+├── 📄 404.html
 ├── 📄 secim.html
+├── 📄 browserconfig.xml
+├── 📄 manifest.json
 ├── 📄 robots.txt
 ├── 📄 sitemap.xml
-└── 📄 netlify.toml
+└── 📄 LICENSE
 ```
 
 ---
@@ -185,15 +201,13 @@ Fotoğraflar doğrudan `Albümler/fotoğraflar/` klasörü altında albümlere a
 ```text
 Albümler/
 └── fotoğraflar/
-    ├── kina-gecesi-2026/
-    │   ├── 01.jpg
-    │   ├── 02.jpg
-    │   └── 03.jpg
+    ├── örnek-nişan-2026/
+    │   ├── fotoğraf dosyaları buraya
+    │   └── ...
     │
-    └── nisan-seansi-2026/
-        ├── 01.jpg
-        ├── 02.jpg
-        └── 03.jpg
+    └── örnek-düğün-2026/
+        ├── fotoğraf dosyaları buraya
+        └── ...
 ```
 
 Yeni albüm eklendikten sonra manifest dosyası şu komutla yeniden oluşturulur:
@@ -477,13 +491,6 @@ Proje gelecekte şu özelliklerle daha da geliştirilebilir:
 
 ---
 
-## 📄 Lisans
-
-Bu proje **Foto Herdem** için geliştirilmiştir.
-
-Fotoğraflar, logolar, marka materyalleri ve müşteri içerikleri Foto Herdem'e aittir ve izinsiz olarak kopyalanamaz, dağıtılamaz veya ticari amaçla kullanılamaz.
-
-Kodun kullanım / dağıtım koşulları proje sahibinin iznine tabidir.
 
 ---
 
@@ -491,3 +498,17 @@ Kodun kullanım / dağıtım koşulları proje sahibinin iznine tabidir.
   <strong>📸 Foto Herdem</strong><br>
   <sub>Anıları geleceğe taşıyoruz.</sub>
 </p>
+
+---
+
+## 📄 Lisans
+
+Bu proje **tüm hakları saklı** lisansı altındadır.
+
+```
+Copyright (c) 2026 Muhammed Akay
+Tüm hakları saklıdır. İzin olmadan kopyalanamaz, dağıtılamaz veya ticari amaçla kullanılamaz.
+Tasarım ve Geliştirme: Muhammed Akay
+```
+
+Detaylar için [LICENSE](LICENSE) dosyasına bakınız.

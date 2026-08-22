@@ -1,21 +1,19 @@
-# Security Policy
+# Güvenlik Politikası
 
-## Supported Versions
+## Desteklenen Sürümler
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+| Sürüm | Destek |
+|-------|--------|
+| main branch | ✅ Aktif |
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Güvenlik Açığı Bildirimi
 
-## Reporting a Vulnerability
+Bir güvenlik açığı bulduysanız lütfen **public olarak paylaşmayın**.
 
-Use this section to tell people how to report a vulnerability.
+📧 **info@fotoherdem.com** adresine e-posta gönderin.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+- Açığı detaylı bir şekilde açıklayın
+- Varsa adımları veya ekran görüntüsünü ekleyin
+- 48 saat içinde yanıt alabilirsiniz
+
+Teşekkürler! 🙏

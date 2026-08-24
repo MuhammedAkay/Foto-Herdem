@@ -706,12 +706,16 @@
       if (info) info.textContent = count > 0 ? `${count} dosya seçildi` : "";
     });
 
-    $("#btn-save-gh-token").addEventListener("click", () => {
+    $("#btn-save-gh-token").addEventListener("click", async () => {
       const val = $("#gh-token-input").value.trim();
       if (!val) { alert("Token boş olamaz."); return; }
-      setGhToken(val);
-      alert("✅ Token kaydedildi.");
-      $("#gh-token-input").value = "";
+      try {
+        await saveGhToken(val);
+        alert("✅ Token veritabanına kaydedildi.");
+        $("#gh-token-input").value = "";
+      } catch (err) {
+        alert("Kayıt hatası: " + err.message);
+      }
     });
     $("#btn-refresh-sessions").addEventListener("click", loadSessions);
     $("#btn-close-selections").addEventListener("click", () => {
@@ -813,16 +817,24 @@
   const GH_REPO_NAME = "Foto-Herdem";
   const GH_BRANCH = "main";
 
-  function getGhToken() {
-    return sessionStorage.getItem("fh_gh_token") || "";
+  async function getGhToken() {
+    const { data, error } = await state.supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "github_token")
+      .single();
+    return (!error && data) ? data.value : "";
   }
 
-  function setGhToken(token) {
-    sessionStorage.setItem("fh_gh_token", token);
+  async function saveGhToken(token) {
+    const { error } = await state.supabase
+      .from("app_settings")
+      .upsert({ key: "github_token", value: token }, { on_conflict: "key" });
+    if (error) throw error;
   }
 
   async function ghApi(path, options = {}) {
-    const token = getGhToken();
+    const token = await getGhToken();
     if (!token) throw new Error("GitHub token ayarlanmamış. Önce token girin.");
     const res = await fetch(`https://api.github.com${path}`, {
       ...options,
@@ -929,7 +941,8 @@
 
     if (!albumName) { setStatus(form, "Albüm adı girin.", true); return; }
     if (!files.length) { setStatus(form, "En az bir fotoğraf seçin.", true); return; }
-    if (!getGhToken()) { setStatus(form, "GitHub token ayarlanmamış.", true); return; }
+    const ghTok = await getGhToken();
+    if (!ghTok) { setStatus(form, "GitHub token ayarlanmamış.", true); return; }
 
     const folder = slugifyFolder(albumName);
     const progressWrap = $("#gh-progress-wrap");

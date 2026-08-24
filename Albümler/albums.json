@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T22:57:04.815Z",
+  "generatedAt": "2026-08-24T19:01:39.655Z",
   "albumFolder": "fotoğraflar",
   "albums": [
     {
@@ -27,15 +27,36 @@
       ]
     },
     {
-      "id": "nisan-seansi-2026",
-      "title": "Nisan Seansi 2026",
-      "path": "fotoğraflar/nisan-seansi-2026",
-      "cover": "fotoğraflar/nisan-seansi-2026/01.jpg",
-      "photoCount": 3,
+      "id": "test-2026",
+      "title": "Test 2026",
+      "path": "fotoğraflar/test-2026",
+      "cover": "fotoğraflar/test-2026/dis-cekim-1.webp",
+      "photoCount": 5,
       "photos": [
-        "fotoğraflar/nisan-seansi-2026/01.jpg",
-        "fotoğraflar/nisan-seansi-2026/02.jpg",
-        "fotoğraflar/nisan-seansi-2026/03.jpg"
+        "fotoğraflar/test-2026/dis-cekim-1.webp",
+        "fotoğraflar/test-2026/dis-cekim-2.webp",
+        "fotoğraflar/test-2026/dis-cekim-3.webp",
+        "fotoğraflar/test-2026/dis-cekim-4.webp",
+        "fotoğraflar/test-2026/dis-cekim-10.webp"
+      ]
+    },
+    {
+      "id": "test-deneme-abc",
+      "title": "Test Deneme Abc",
+      "path": "fotoğraflar/test-deneme-abc",
+      "cover": "fotoğraflar/test-deneme-abc/41891.webp",
+      "photoCount": 10,
+      "photos": [
+        "fotoğraflar/test-deneme-abc/41891.webp",
+        "fotoğraflar/test-deneme-abc/41892.webp",
+        "fotoğraflar/test-deneme-abc/41903.webp",
+        "fotoğraflar/test-deneme-abc/41929.webp",
+        "fotoğraflar/test-deneme-abc/42450.webp",
+        "fotoğraflar/test-deneme-abc/42518.webp",
+        "fotoğraflar/test-deneme-abc/42721.webp",
+        "fotoğraflar/test-deneme-abc/42728.webp",
+        "fotoğraflar/test-deneme-abc/42729.webp",
+        "fotoğraflar/test-deneme-abc/42730.webp"
       ]
     }
   ]

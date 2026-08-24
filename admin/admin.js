@@ -1,1072 +1,773 @@
-(() => {
-  "use strict";
-
-  const CONFIG = window.FH_CONFIG || {};
-  const ALBUMS_MANIFEST = "../Albümler/albums.json";
-
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  const state = {
-    supabase: null,
-    albums: [],
-    isMain: false,
-    albumById: new Map(),
-    photoUrl: new Map(),
-    sessions: [],
-    createAlbumPath: "",
-  };
-
-  const PROTECTION_LABELS = {
-    0: "Koruma yok",
-    1: "Hafif koruma",
-    2: "Güçlü koruma",
-    3: "Maksimum koruma",
-  };
-
-  const STATUS_LABELS = {
-    active: { text: "Aktif", cls: "status-active" },
-    used: { text: "Kullanıldı", cls: "status-used" },
-    expired: { text: "Süresi Doldu", cls: "status-expired" },
-    revoked: { text: "İptal", cls: "status-revoked" },
-  };
-
-  let currentToken = "";
-  const token = () => currentToken;
-
-  function fmtDate(value) {
-    if (!value) return "—";
-    const d = new Date(value);
-    return isNaN(d) ? "—" : d.toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
-  }
-
-  function show(viewName) {
-    ["view-setup", "view-login", "view-dashboard"].forEach((id) => {
-      $(`#${id}`).hidden = id !== `view-${viewName}`;
-    });
-    const ghPanel = $("#github-upload-panel");
-    if (ghPanel) ghPanel.hidden = viewName !== "dashboard";
-    $("#topbar-actions").hidden = viewName !== "dashboard";
-  }
-
-  async function rpc(name, args) {
-    const { data, error } = await state.supabase.rpc(name, args);
-    if (error) {
-      throw new Error(error.message || "Supabase hatası");
-    }
-    return data;
-  }
-
-  function setStatus(form, text, isError = false) {
-    const node = form.querySelector("[data-status]");
-    if (!node) return;
-    node.textContent = text || "";
-    node.style.color = isError ? "#a03a2e" : "var(--brand-dark)";
-  }
-
-  async function copyText(text, button) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (_) {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
-    if (button) {
-      const original = button.textContent;
-      button.textContent = "Kopyalandı ✓";
-      setTimeout(() => {
-        button.textContent = original;
-      }, 1600);
-    }
-  }
-
-  function selectionLink(code, password) {
-    const base = new URL("../secim.html", location.href);
-    base.searchParams.set("kod", formatCode(code));
-    if (password) {
-      base.searchParams.set("sifre", password);
-    }
-    return base.href;
-  }
-
-  function formatCode(code) {
-    const c = String(code || "").trim();
-    if (/^\d{6}$/.test(c)) {
-      return `${c.slice(0, 3)}-${c.slice(3)}`;
-    }
-    return c;
-  }
-
-  function sessionCopyText(code, password) {
-    const baseLink = new URL("../secim.html", location.href).href;
-    return [
-      "📷 Foto Herdem — Fotoğraf Seçimi",
-      "",
-      `Seçim Linki: ${baseLink}`,
-      `Seçim Kodu: ${formatCode(code)}`,
-      `Şifre: ${password || "—"}`,
-    ].join("\n");
-  }
-
-  // ---------- Albüm manifesti ----------
-
-  async function loadAlbums() {
-    const hint = $("#albums-hint");
-    const list = $("#albums-list");
-
-    let localAlbums = [];
-    try {
-      const res = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error(`albums.json bulunamadı (HTTP ${res.status})`);
-      }
-      const manifest = await res.json();
-      localAlbums = Array.isArray(manifest.albums) ? manifest.albums : [];
-    } catch (err) {
-      hint.textContent =
-        "Albümler/fotoğraflar klasöründe albüm bulunamadı veya albums.json üretilmemiş.";
-      list.innerHTML = "";
-      return;
-    }
-
-    state.albums = localAlbums;
-
-    if (state.albums.length === 0) {
-      hint.textContent =
-        "Albüm yok. Albümler/fotoğraflar klasörüne albüm klasörleri ekleyin.";
-      list.innerHTML = "";
-      return;
-    }
-
-    state.albumById = new Map(state.albums.map((a) => [a.id, a]));
-    state.photoUrl = new Map();
-    state.albums.forEach((album) => {
-      album.photos.forEach((photo) => {
-        state.photoUrl.set(photo, `../Albümler/${encodeURI(photo)}`);
-      });
-    });
-
-    hint.textContent = `${state.albums.length} albüm, Albümler/fotoğraflar klasöründen okundu.`;
-    list.innerHTML = state.albums
-      .map((album) => {
-        const cover = state.photoUrl.get(album.cover) || "../assets/logo.webp";
-        return `
-          <article class="admin-album">
-            <div class="admin-album-cover">
-              <img src="${cover}" alt="" loading="lazy">
-              <span class="photo-count">${album.photoCount} fotoğraf</span>
-            </div>
-            <div class="admin-album-body">
-              <h3>${escapeHtml(album.title)}</h3>
-              <div class="admin-hint">${escapeHtml(album.path)}</div>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-primary" type="button" data-create-album="${escapeAttr(album.id)}">Link Oluştur</button>
-                <button class="btn btn-secondary" type="button" data-delete-album="${escapeAttr(album.id)}" style="color:#c0392b;">🗑 Sil</button>
-              </div>
-            </div>
-          </article>`;
-      })
-      .join("");
-  }
-
-  // ---------- Link oluşturma ----------
-
-  function fillAlbumSelect(selectedId) {
-    const select = $("#create-album");
-    select.innerHTML = state.albums
-      .map((a) => `<option value="${escapeAttr(a.id)}">${escapeHtml(a.title)}</option>`)
-      .join("");
-    if (selectedId) {
-      select.value = selectedId;
-    }
-  }
-
-  function openCreatePanel(albumId) {
-    const album = state.albumById.get(albumId);
-    if (!album) return;
-    $("#create-panel").hidden = false;
-    $("#create-result").hidden = true;
-    $("#create-form").reset();
-    fillAlbumSelect(albumId);
-    $("#create-password").value = "";
-    const max = $("#create-max");
-    max.value = album.photoCount < 10 ? String(album.photoCount) : "10";
-    const min = $("#create-min");
-    min.value = "1";
-    const radio = $(`#protection-radios input[value="2"]`);
-    if (radio) radio.checked = true;
-    $("#create-panel").scrollIntoView({ behavior: "smooth", block: "start" });
-    $("#create-password").focus();
-  }
-
-  async function createSession(form) {
-    const album = state.albumById.get($("#create-album").value);
-    if (!album) {
-      setStatus(form, "Lütfen bir albüm seçin.", true);
-      return;
-    }
-
-    const password = form.elements.password.value.trim();
-    const maxSelections = parseInt(form.elements.max_selections.value, 10);
-    const minSelections = parseInt(form.elements.min_selections.value, 10);
-    const protectionLevel = parseInt(form.elements.protection_level.value, 10);
-    const expiresRaw = form.elements.expires_at.value;
-
-    if (!password || password.length < 4) {
-      setStatus(form, "Müşteri şifresi en az 4 karakter olmalı.", true);
-      return;
-    }
-    if (!Number.isInteger(maxSelections) || maxSelections < 1 || maxSelections > 500) {
-      setStatus(form, "Geçerli bir fotoğraf sayısı girin (1-500).", true);
-      return;
-    }
-    if (!Number.isInteger(minSelections) || minSelections < 0 || minSelections > 500) {
-      setStatus(form, "Geçerli bir en az seçim sayısı girin (0-500).", true);
-      return;
-    }
-    if (minSelections > maxSelections) {
-      setStatus(form, "En az seçim sayısı, en fazla seçim sayısından büyük olamaz.", true);
-      return;
-    }
-
-    setStatus(form, "Oluşturuluyor…");
-    try {
-      const data = await rpc("admin_create_session", {
-        p_token: token(),
-        p_album_path: album.path,
-        p_album_title: album.title,
-        p_password: password,
-        p_max_selections: maxSelections,
-        p_min_selections: minSelections,
-        p_protection_level: protectionLevel,
-        p_expires_at: expiresRaw ? new Date(expiresRaw).toISOString() : null,
-      });
-
-      const fullLink = selectionLink(data.code, password);
-      const codeOnlyLink = selectionLink(data.code, "");
-      const allInfo = sessionCopyText(data.code, password);
-
-      $("#create-result").innerHTML = `
-        <h3>Link Oluşturuldu 🎉</h3>
-        <div class="link-box">
-          <div class="link-line">
-            <code>${escapeHtml(fullLink)}</code>
-            <button class="btn btn-dark btn-sm" type="button" data-copy="${escapeAttr(fullLink)}">Linki Kopyala</button>
-          </div>
-          <div class="link-line">
-            <code>Kod: ${escapeHtml(formatCode(data.code))}</code>
-            <button class="btn btn-secondary btn-sm" type="button" data-copy="${escapeAttr(codeOnlyLink)}">Kodsuz Link</button>
-          </div>
-          <div class="link-line">
-            <code>Şifre: ${escapeHtml(password)}</code>
-            <button class="btn btn-secondary btn-sm" type="button" data-copy="${escapeAttr(password)}">Şifreyi Kopyala</button>
-          </div>
-        </div>
-        <div class="admin-actions">
-          <button class="btn btn-primary" type="button" data-copy="${escapeAttr(allInfo)}">Tümünü Kopyala (Link + Kod + Şifre)</button>
-        </div>
-        <p class="admin-warning">
-          ⚠️ Şifre ayrıca linkler listesinde gizli olarak saklanır (•••••• üzerine tıklayınca açılır).
-          Linki ve şifreyi müşteriye ayrı kanallardan iletmeniz önerilir.
-        </p>`;
-      $("#create-result").hidden = false;
-      setStatus(form, "");
-      form.reset();
-      await loadSessions();
-    } catch (err) {
-      setStatus(form, `Hata: ${err.message}`, true);
-    }
-  }
-
-  // ---------- Linkler ve seçimler ----------
-
-  async function loadSessions() {
-    const list = $("#sessions-list");
-    try {
-      state.sessions = (await rpc("admin_list_sessions", { p_token: token() })) || [];
-    } catch (err) {
-      list.innerHTML = `<div class="empty-state">Seçim linkleri yüklenemedi: ${escapeHtml(err.message)}</div>`;
-      return;
-    }
-
-    if (state.sessions.length === 0) {
-      list.innerHTML = `<div class="empty-state">Henüz oluşturulmuş seçim linki yok.</div>`;
-      return;
-    }
-
-    list.innerHTML = state.sessions
-      .map((s) => {
-        const st = STATUS_LABELS[s.status] || STATUS_LABELS.active;
-        const protection = PROTECTION_LABELS[s.protection_level] || "";
-        const link = selectionLink(s.code, "");
-        const allInfo = sessionCopyText(s.code, s.password || "");
-        const hasSelections = (s.selection_count || 0) > 0;
-        const rangeTag =
-          s.min_selections > 0
-            ? `${s.min_selections}–${s.max_selections} seçim`
-            : `${s.max_selections} seçim`;
-        return `
-          <article class="admin-session" data-session-id="${escapeAttr(s.id)}">
-            <div class="admin-session-info">
-              <h3>${escapeHtml(s.album_title)}</h3>
-              <div class="admin-session-meta">
-                <span class="tag">Kod: ${escapeHtml(formatCode(s.code))}</span>
-                <span class="tag">${rangeTag}</span>
-                <span class="tag">${escapeHtml(protection)}</span>
-                <span class="status-badge ${st.cls}">${st.text}</span>
-              </div>
-              <div class="admin-hint">
-                Oluşturulma: ${fmtDate(s.created_at)} · Bitiş: ${fmtDate(s.expires_at)}<br>
-                İzin Verilen: ${rangeTag} · Yapılan Seçim: ${s.selection_count || 0}
-              </div>
-              <div class="admin-session-password">
-                <span class="tag">Şifre:</span>
-                <button class="password-reveal" type="button" data-reveal-password="${escapeAttr(s.password || "")}" aria-label="Şifreyi göster/gizle">••••••</button>
-              </div>
-            </div>
-            <div class="admin-session-actions">
-              ${s.status === "active" ? `<button class="btn btn-dark btn-sm" type="button" data-revoke="${escapeAttr(s.id)}">İptal Et</button>` : ""}
-              <button class="btn btn-secondary btn-sm" type="button" data-copy-link="${escapeAttr(link)}">Linki Kopyala</button>
-              <button class="btn btn-secondary btn-sm" type="button" data-copy-info="${escapeAttr(allInfo)}">Bilgileri Kopyala</button>
-              <button class="btn btn-primary btn-sm" type="button" data-selections="${escapeAttr(s.id)}" ${hasSelections ? "" : "disabled"}>Seçimleri Gör</button>
-              <button class="btn btn-danger btn-sm" type="button" data-delete="${escapeAttr(s.id)}">Sil</button>
-            </div>
-          </article>`;
-      })
-      .join("");
-  }
-
-  async function openSelections(sessionId) {
-    const session = state.sessions.find((s) => s.id === sessionId);
-    const title = $("#selections-title");
-    const list = $("#selections-list");
-
-    title.textContent = session ? `${session.album_title} — Seçimler` : "Seçimler";
-    $("#selections-panel").hidden = false;
-    $("#selections-panel").scrollIntoView({ behavior: "smooth", block: "start" });
-
-    list.innerHTML = `<div class="empty-state">Yükleniyor…</div>`;
-    let selections = [];
-    try {
-      selections = (await rpc("admin_get_selections", { p_token: token(), p_session_id: sessionId })) || [];
-    } catch (err) {
-      list.innerHTML = `<div class="empty-state">Seçimler yüklenemedi: ${escapeHtml(err.message)}</div>`;
-      return;
-    }
-
-    if (selections.length === 0) {
-      list.innerHTML = `<div class="empty-state">Bu linke henüz seçim yapılmamış.</div>`;
-      return;
-    }
-
-    list.innerHTML = selections
-      .map((sel) => {
-        const thumbs = (sel.photo_ids || [])
-          .map((photo) => {
-            const url = state.photoUrl.get(photo) || `../Albümler/${encodeURI(photo)}`;
-            const fileName = photo.split("/").pop();
-            return `
-              <figure class="selection-thumb">
-                <img src="${url}" alt="" loading="lazy">
-                <figcaption title="${escapeAttr(photo)}">${escapeHtml(fileName)}</figcaption>
-              </figure>`;
-          })
-          .join("");
-        const contact = [sel.contact_name, sel.contact_phone].filter(Boolean).join(" · ");
-        return `
-          <article class="selection-card">
-            <div class="selection-head">
-              <strong>${escapeHtml(contact || "İsimsiz seçim")}${sel.note ? ` — ${escapeHtml(sel.note)}` : ""}</strong>
-              <span class="selection-meta">${fmtDate(sel.submitted_at)} · ${sel.photo_ids?.length || 0} fotoğraf</span>
-            </div>
-            <div class="selection-grid">${thumbs}</div>
-          </article>`;
-      })
-      .join("");
-  }
-
-  async function revokeSession(sessionId) {
-    if (!confirm("Bu seçim linki iptal edilsin mi? Müşteri bir daha giriş yapamaz.")) return;
-    try {
-      await rpc("admin_revoke_session", { p_token: token(), p_session_id: sessionId });
-      await loadSessions();
-    } catch (err) {
-      alert(`İptal edilemedi: ${err.message}`);
-    }
-  }
-
-  async function deleteSession(sessionId) {
-    if (!confirm("Bu seçim linki ve tüm seçimleri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.")) return;
-    try {
-      await rpc("admin_delete_session", { p_token: token(), p_session_id: sessionId });
-      await loadSessions();
-    } catch (err) {
-      alert(`Silinemedi: ${err.message}`);
-    }
-  }
-
-  // ---------- Hesap ----------
-
-  async function changePassword(form) {
-    const oldPass = form.elements.old_password.value;
-    const newPass = form.elements.new_password.value;
-    if (newPass.length < 6) {
-      setStatus(form, "Yeni şifre en az 6 karakter olmalı.", true);
-      return;
-    }
-    setStatus(form, "Güncelleniyor…");
-    try {
-      const ok = await rpc("admin_change_password", {
-        p_token: token(),
-        p_old_password: oldPass,
-        p_new_password: newPass,
-      });
-      if (ok) {
-        setStatus(form, "Şifre güncellendi.");
-        form.reset();
-      } else {
-        setStatus(form, "Mevcut şifre hatalı.", true);
-      }
-    } catch (err) {
-      setStatus(form, `Hata: ${err.message}`, true);
-    }
-  }
-
-  async function addAdmin(form) {
-    const username = form.elements.username.value.trim();
-    const password = form.elements.password.value;
-    const displayName = form.elements.display_name.value.trim();
-    if (username.length < 3) {
-      setStatus(form, "Kullanıcı adı en az 3 karakter olmalı.", true);
-      return;
-    }
-    if (password.length < 6) {
-      setStatus(form, "Şifre en az 6 karakter olmalı.", true);
-      return;
-    }
-    setStatus(form, "Ekleniyor…");
-    try {
-      const data = await rpc("admin_create_admin", {
-        p_token: token(),
-        p_username: username,
-        p_password: password,
-        p_display_name: displayName || "Admin",
-      });
-      setStatus(form, `Admin eklendi: ${data.username}`);
-      form.reset();
-      await loadAdmins();
-    } catch (err) {
-      setStatus(form, `Hata: ${err.message}`, true);
-    }
-  }
-
-  async function loadAdmins() {
-    const list = $("#admins-list");
-    if (!list) return;
-    try {
-      const admins = (await rpc("admin_list_admins", { p_token: token() })) || [];
-      const activeAdmins = admins.filter((a) => a.is_active);
-      if (activeAdmins.length === 0) {
-        list.innerHTML = `<div class="empty-state">Henüz admin yok.</div>`;
-        return;
-      }
-      list.innerHTML = activeAdmins
-        .map((a) => {
-          const mainBadge = a.is_main
-            ? `<span class="status-badge status-active">Ana Admin</span>`
-            : "";
-          const deleteBtn = a.is_main
-            ? ""
-            : `<button class="btn btn-danger btn-sm" type="button" data-delete-admin="${escapeAttr(a.id)}">Sil</button>`;
-          return `
-            <article class="admin-admin-item">
-              <div class="admin-admin-info">
-                <strong>${escapeHtml(a.display_name || a.username)}</strong>
-                <span class="tag">@${escapeHtml(a.username)}</span>
-                ${mainBadge}
-              </div>
-              <div class="admin-session-actions">${deleteBtn}</div>
-            </article>`;
-        })
-        .join("");
-    } catch (err) {
-      list.innerHTML = `<div class="empty-state">Adminler yüklenemedi: ${escapeHtml(err.message)}</div>`;
-    }
-  }
-
-  async function deleteAdmin(adminId) {
-    if (!confirm("Bu admin silinsin mi? Silinen admin bir daha giriş yapamaz.")) return;
-    try {
-      await rpc("admin_delete_admin", { p_token: token(), p_admin_id: adminId });
-      await loadAdmins();
-    } catch (err) {
-      alert(`Silinemedi: ${err.message}`);
-    }
-  }
-
-  // ---------- Giriş / çıkış ----------
-
-  async function login(form) {
-    const username = form.elements.username.value.trim();
-    const password = form.elements.password.value;
-    if (!username || !password) {
-      setStatus(form, "Kullanıcı adı ve şifre girin.", true);
-      return;
-    }
-
-    setStatus(form, "Giriş yapılıyor…");
-    try {
-      const data = await rpc("admin_login", { p_username: username, p_password: password });
-      if (!data || !data.token) {
-        setStatus(form, "Kullanıcı adı veya şifre hatalı.", true);
-        return;
-      }
-      currentToken = data.token;
-      $("#admin-who").textContent = data.display_name || data.username;
-      setStatus(form, "");
-      form.reset();
-      await enterDashboard();
-    } catch (err) {
-      setStatus(form, `Hata: ${err.message}`, true);
-    }
-  }
-
-  async function logout() {
-    try {
-      await rpc("admin_logout", { p_token: token() });
-    } catch (_) {
-      // yerel oturum yine de temizlenir
-    }
-    currentToken = "";
-    $("#admin-who").textContent = "";
-    show("login");
-  }
-
-  async function enterDashboard() {
-    try {
-      const me = await rpc("admin_me", { p_token: token() });
-      if (!me) {
-        currentToken = "";
-        show("login");
-        return;
-      }
-      $("#admin-who").textContent = me.display_name || me.username;
-      show("dashboard");
-      state.isMain = Boolean(me.is_main);
-      $("#admins-panel").hidden = !state.isMain;
-      $("#email-panel").hidden = !state.isMain;
-      // Upload paneli herkese açık, token ayarı sadece ana admin
-      const ghTokenSection = document.getElementById("gh-token-details");
-      if (ghTokenSection) ghTokenSection.hidden = !state.isMain;
-      const tasks = [loadAlbums(), loadSessions()];
-      if (state.isMain) {
-        tasks.push(loadAdminEmail(), loadAdmins());
-      }
-      await Promise.all(tasks);
-    } catch (_) {
-      currentToken = "";
-      show("login");
-    }
-  }
-
-  async function loadAdminEmail() {
-    const input = $("#admin-email");
-    if (!input) return;
-    try {
-      const data = await rpc("admin_get_email");
-      input.value = data || "";
-    } catch (_) {
-      input.value = "";
-    }
-  }
-
-  async function saveEmail(form) {
-    const email = form.elements.admin_email.value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setStatus(form, "Geçerli bir e-posta adresi girin.", true);
-      return;
-    }
-    setStatus(form, "Kaydediliyor…");
-    try {
-      await rpc("admin_set_email", { p_token: token(), p_email: email });
-      setStatus(form, "Bildirim e-postası kaydedildi ✓");
-    } catch (err) {
-      setStatus(form, `Hata: ${err.message}`, true);
-    }
-  }
-
-  async function sendTestEmail() {
-    const input = $("#admin-email");
-    const email = input ? input.value.trim() : "";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Önce geçerli bir e-posta adresi girin.");
-      return;
-    }
-    const btn = $("#btn-test-email");
-    const original = btn ? btn.textContent : "";
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Gönderiliyor…";
-    }
-    try {
-      // Bildirim e-postası seçim sayfasında veritabanından okunuyor:
-      // önce buraya kaydedelim ki seçim bildirimleri doğru adrese gitsin.
-      await rpc("admin_set_email", { p_token: token(), p_email: email });
-
-      await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          _subject: "📷 Foto Herdem — Test Bildirimi",
-          _template: "box",
-          Mesaj: "Bu bir test bildirimidir. Bundan sonra müşteri seçim bildirimleri bu adrese iletilecek.",
-        }),
-      });
-      alert(
-        "Bildirim e-postası kaydedildi ve test bildirimi gönderildi. " +
-          "İlk kullanımda formsubmit.co'dan gelen doğrulama bağlantısına tıklamayı unutmayın."
-      );
-    } catch (err) {
-      alert(`E-posta kaydedilemedi veya test gönderilemedi: ${err.message}`);
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    }
-  }
-
-  // ---------- Yardımcılar ----------
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function escapeAttr(value) {
-    return escapeHtml(value);
-  }
-
-  // ---------- Olaylar ----------
-
-  function bindEvents() {
-    $("#login-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      login(e.currentTarget);
-    });
-
-    $("#btn-logout").addEventListener("click", logout);
-    document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const input = document.getElementById(btn.dataset.togglePassword);
-        if (!input) return;
-        const show = input.type === "password";
-        input.type = show ? "text" : "password";
-        btn.textContent = show ? "🙈" : "👁";
-        btn.setAttribute("aria-label", show ? "Şifreyi gizle" : "Şifreyi göster");
-        input.focus();
-      });
-    });
-
-    $("#albums-list").addEventListener("click", (e) => {
-      const delBtn = e.target.closest("[data-delete-album]");
-      if (delBtn) {
-        deleteAlbumFromGithub(delBtn.dataset.deleteAlbum);
-      }
-    });
-
-    $("#btn-refresh-albums").addEventListener("click", loadAlbums);
-
-    $("#gh-upload-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      handleGithubUpload(e.currentTarget);
-    });
-
-    $("#gh-files").addEventListener("change", (e) => {
-      const count = e.target.files ? e.target.files.length : 0;
-      const info = $("#gh-file-info");
-      if (info) info.textContent = count > 0 ? `${count} dosya seçildi` : "";
-    });
-
-    $("#btn-save-gh-token").addEventListener("click", () => {
-      const val = $("#gh-token-input").value.trim();
-      if (!val) { alert("Token boş olamaz."); return; }
-      setGhToken(val);
-      alert("✅ Token kaydedildi.");
-      $("#gh-token-input").value = "";
-    });
-    $("#btn-refresh-sessions").addEventListener("click", loadSessions);
-    $("#btn-close-selections").addEventListener("click", () => {
-      $("#selections-panel").hidden = true;
-    });
-
-    $("#albums-list").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-create-album]");
-      if (btn) openCreatePanel(btn.dataset.createAlbum);
-    });
-
-    $("#create-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      createSession(e.currentTarget);
-    });
-
-    $("#btn-cancel-create").addEventListener("click", () => {
-      $("#create-panel").hidden = true;
-      $("#create-result").hidden = true;
-    });
-
-    $("#sessions-list").addEventListener("click", (e) => {
-      const revoke = e.target.closest("[data-revoke]");
-      if (revoke) {
-        revokeSession(revoke.dataset.revoke);
-        return;
-      }
-      const reveal = e.target.closest("[data-reveal-password]");
-      if (reveal) {
-        const password = reveal.dataset.revealPassword;
-        if (reveal.dataset.open === "1") {
-          reveal.textContent = "••••••";
-          reveal.dataset.open = "0";
-        } else {
-          reveal.textContent = password || "—";
-          reveal.dataset.open = "1";
-        }
-        return;
-      }
-      const copy = e.target.closest("[data-copy-link]");
-      if (copy) {
-        copyText(copy.dataset.copyLink, copy);
-        return;
-      }
-      const copyInfo = e.target.closest("[data-copy-info]");
-      if (copyInfo) {
-        copyText(copyInfo.dataset.copyInfo, copyInfo);
-        return;
-      }
-      const selections = e.target.closest("[data-selections]");
-      if (selections) {
-        openSelections(selections.dataset.selections);
-        return;
-      }
-      const del = e.target.closest("[data-delete]");
-      if (del) {
-        deleteSession(del.dataset.delete);
-      }
-    });
-
-    $("#create-result").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-copy]");
-      if (btn) copyText(btn.dataset.copy, btn);
-    });
-
-    $("#password-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      changePassword(e.currentTarget);
-    });
-
-    $("#email-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      saveEmail(e.currentTarget);
-    });
-
-    $("#btn-test-email").addEventListener("click", sendTestEmail);
-
-    $("#admin-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      addAdmin(e.currentTarget);
-    });
-
-    $("#admins-list").addEventListener("click", (e) => {
-      const del = e.target.closest("[data-delete-admin]");
-      if (del) {
-        deleteAdmin(del.dataset.deleteAdmin);
-      }
-    });
-
-    document.querySelectorAll("[data-year]").forEach((node) => {
-      node.textContent = new Date().getFullYear();
-    });
-  }
-
-
-  // ---------- GitHub Fotoğraf Yükleme / Silme ----------
-
-  const GH_REPO_OWNER = "MuhammedAkay";
-  const GH_REPO_NAME = "Foto-Herdem";
-  const GH_BRANCH = "main";
-
-  function getGhToken() {
-    return sessionStorage.getItem("fh_gh_token") || "";
-  }
-
-  function setGhToken(token) {
-    sessionStorage.setItem("fh_gh_token", token);
-  }
-
-  async function ghApi(path, options = {}) {
-    const token = getGhToken();
-    if (!token) throw new Error("GitHub token ayarlanmamış. Önce token girin.");
-    const res = await fetch(`https://api.github.com${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        ...options.headers
-      }
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.message || `GitHub API hatası: ${res.status}`);
-    }
-    return res.json();
-  }
-
-  function slugifyFolder(name) {
-    return name.trim().toLowerCase()
-      .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
-      .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  }
-
-  async function convertToWebP(file, maxBytes = 20 * 1024 * 1024) {
-    return new Promise((resolve, reject) => {
-      if (file.type === "image/webp" && file.size <= maxBytes) {
-        resolve(file);
-        return;
-      }
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        let quality = 0.85;
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        function tryEncode() {
-          canvas.toBlob((blob) => {
-            if (!blob) { reject(new Error("WebP dönüşümü başarısız")); return; }
-            if (blob.size <= maxBytes || quality <= 0.3) {
-              const webpFile = new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
-              resolve(webpFile);
-            } else {
-              quality -= 0.15;
-              tryEncode();
-            }
-          }, "image/webp", quality);
-        }
-        tryEncode();
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Görsel okunamadı")); };
-      img.src = url;
-    });
-  }
-
-  async function uploadToGithub(filePath, contentBase64, message) {
-    // Check if file exists to get SHA (for update)
-    let sha = undefined;
-    try {
-      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
-      sha = existing.sha;
-    } catch (_) { /* doesn't exist yet */ }
-
-    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message,
-        content: contentBase64,
-        branch: GH_BRANCH,
-        ...(sha ? { sha } : {})
-      })
-    });
-  }
-
-  async function deleteFromGithub(filePath) {
-    let sha;
-    try {
-      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
-      sha = existing.sha;
-    } catch (_) {
-      return; // already gone
-    }
-    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
-      method: "DELETE",
-      body: JSON.stringify({ message: `Silindi: ${filePath}`, branch: GH_BRANCH, sha })
-    });
-  }
-
-  function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    return btoa(binary);
-  }
-
-  async function handleGithubUpload(form) {
-    const albumName = form.querySelector("#gh-album-name").value.trim();
-    const fileInput = form.querySelector("#gh-files");
-    const files = Array.from(fileInput.files || []);
-
-    if (!albumName) { setStatus(form, "Albüm adı girin.", true); return; }
-    if (!files.length) { setStatus(form, "En az bir fotoğraf seçin.", true); return; }
-    if (!getGhToken()) { setStatus(form, "GitHub token ayarlanmamış.", true); return; }
-
-    const folder = slugifyFolder(albumName);
-    const progressWrap = $("#gh-progress-wrap");
-    const progressBar = $("#gh-progress-bar");
-    const statusText = $("#gh-status-text");
-
-    progressWrap.hidden = false;
-    setStatus(form, "");
-
-    try {
-      const photoPaths = [];
-
-      for (let i = 0; i < files.length; i++) {
-        statusText.textContent = `${files[i].name} → WebP dönüşümü…`;
-        const webpFile = await convertToWebP(files[i]);
-
-        statusText.textContent = `${webpFile.name} yükleniyor (${i + 1}/${files.length})…`;
-        const buffer = await webpFile.arrayBuffer();
-        const base64 = arrayBufferToBase64(buffer);
-        const path = `Albümler/fotoğraflar/${folder}/${webpFile.name}`;
-
-        await uploadToGithub(path, base64, `📷 ${albumName}: ${webpFile.name}`);
-        photoPaths.push(`fotoğraflar/${folder}/${webpFile.name}`);
-
-        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
-        setStatus(form, `${i + 1}/${files.length} tamamlandı`);
-      }
-
-      // albums.json güncelle
-      statusText.textContent = "albums.json güncelleniyor…";
-      await rebuildAlbumsJson();
-
-      setStatus(form, "");
-      form.reset();
-      $("#gh-file-info").textContent = "";
-      alert(`✅ ${photoPaths.length} fotoğraf yüklendi!`);
-      await loadAlbums();
-
-    } catch (err) {
-      console.error(err);
-      setStatus(form, err.message || "Yükleme hatası", true);
-    } finally {
-      setTimeout(() => { progressWrap.hidden = true; }, 3000);
-    }
-  }
-
-  async function rebuildAlbumsJson() {
-    // Mevcut manifest'i al
-    let manifest;
-    try {
-      const res = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
-      manifest = await res.json();
-    } catch (_) {
-      manifest = { generatedAt: "", albumFolder: "fotoğraflar", albums: [] };
-    }
-
-    // Yeni klasörü tara (GitHub tree API ile)
-    const treeData = await ghApi(
-      `/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/git/trees/${GH_BRANCH}?recursive=1`
-    );
-
-    const photoFiles = treeData.tree.filter(
-      (item) => item.path.startsWith("Albümler/fotoğraflar/") &&
-                item.type === "blob" &&
-                /\.(jpg|jpeg|png|webp|gif)$/i.test(item.path)
-    );
-
-    // Klasörlere grupla
-    const folders = {};
-    for (const item of photoFiles) {
-      const relPath = item.path.replace("Albümler/", "");
-      const folderPath = relPath.split("/")[0] + "/" + relPath.split("/")[1];
-      if (!folders[folderPath]) folders[folderPath] = [];
-      folders[folderPath].push(relPath);
-    }
-
-    const albums = Object.entries(folders).map(([path, photos]) => {
-      photos.sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
-      const folderName = path.split("/")[1];
-      return {
-        id: slugifyFolder(folderName),
-        title: folderName.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-        path,
-        cover: photos[0],
-        photoCount: photos.length,
-        photos
-      };
-    }).sort((a, b) => a.title.localeCompare(b.title, "tr"));
-
-    const updated = {
-      generatedAt: new Date().toISOString(),
-      albumFolder: "fotoğraflar",
-      albums
-    };
-
-    const jsonContent = JSON.stringify(updated, null, 2) + "\n";
-    const base64 = btoa(unescape(encodeURIComponent(jsonContent)));
-    await uploadToGithub("Albümler/albums.json", base64, "🤖 albums.json güncellendi");
-  }
-
-  async function deleteAlbumFromGithub(albumId) {
-    if (!confirm(`"${albumId}" albümündeki tüm fotoğraflar silinecek. Emin misiniz?`)) return;
-
-    try {
-      // Albümün dosyalarını bul
-      const album = state.albumById.get(albumId);
-      if (!album || !album.photos?.length) {
-        alert("Albüm bulunamadı.");
-        return;
-      }
-
-      for (const photo of album.photos) {
-        const filePath = `Albümler/${photo}`;
-        try {
-          await deleteFromGithub(filePath);
-        } catch (_) { /* skip */ }
-      }
-
-      await rebuildAlbumsJson();
-      alert("✅ Albüm silindi.");
-      await loadAlbums();
-    } catch (err) {
-      alert("Silme hatası: " + err.message);
-    }
-  }
-
-
-  // ---------- Başlangıç ----------
-
-
-  function init() {
-    bindEvents();
-    const hasConfig = Boolean(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
-
-    if (!hasConfig) {
-      show("setup");
-      return;
-    }
-
-    state.supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-
-    if (token()) {
-      enterDashboard();
-    } else {
-      show("login");
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", init);
-})();
+-- =============================================================
+-- Foto Herdem - Admin & Müşteri Seçim Sistemi
+-- Supabase SQL Editor'da çalıştırın (veya: supabase db push)
+-- Varsayılan admin:  kullanıcı adı: herdem   şifre: herdem123
+-- Kurulumdan sonra admin panelinden şifrenizi değiştirin.
+-- =============================================================
+
+create extension if not exists pgcrypto;
+
+-- -------------------------------------------------------------
+-- TABLOLAR
+-- -------------------------------------------------------------
+
+create table if not exists public.admins (
+  id uuid primary key default gen_random_uuid(),
+  username text unique not null check (length(username) >= 3),
+  password_hash text not null,
+  display_name text not null default 'Admin',
+  is_main boolean not null default false,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Mevcut kurulumlar için: is_main sütununu ekle
+alter table public.admins
+  add column if not exists is_main boolean not null default false;
+
+create table if not exists public.admin_sessions (
+  token uuid primary key default gen_random_uuid(),
+  admin_id uuid not null references public.admins(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '12 hours'
+);
+
+create table if not exists public.customer_sessions (
+  id uuid primary key default gen_random_uuid(),
+  code text unique not null,
+  album_path text not null,
+  album_title text not null,
+  password_hash text not null,
+  password_plain text,
+  max_selections int not null default 10 check (max_selections between 1 and 500),
+  min_selections int not null default 0 check (min_selections between 0 and 500),
+  protection_level int not null default 2 check (protection_level between 0 and 3),
+  expires_at timestamptz,
+  status text not null default 'active'
+    check (status in ('active', 'used', 'expired', 'revoked')),
+  created_by uuid references public.admins(id),
+  created_at timestamptz not null default now(),
+  photos text[] not null default '{}'
+);
+
+-- Mevcut kurulumlar için: photos sütununu ekle
+alter table public.customer_sessions
+  add column if not exists photos text[] not null default '{}';
+
+-- Mevcut kurulumlar için: min_selections sütununu ekle
+alter table public.customer_sessions
+  add column if not exists min_selections int not null default 0;
+
+-- Mevcut kurulumlar için: password_plain sütununu ekle
+-- (admin panelinde şifreyi gizli şekilde görüntüleyebilmek için saklanır)
+alter table public.customer_sessions
+  add column if not exists password_plain text;
+
+create table if not exists public.selections (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.customer_sessions(id) on delete cascade,
+  photo_ids text[] not null,
+  contact_name text,
+  contact_phone text,
+  note text,
+  submitted_at timestamptz not null default now()
+);
+
+-- Albümler (fotoğraflar Supabase Storage'da; bu tablo yalnızca meta veridir)
+-- scripts/upload-albums.js bu tabloyu doldurur/günceller.
+create table if not exists public.albums (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  title text not null,
+  path text not null,
+  cover text not null,
+  photos text[] not null default '{}',
+  photo_count int not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+-- Bildirim ayarları (bildirim e-posta adresi vb.)
+create table if not exists public.admin_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
+-- RLS: anon/authenticated tablolara doğrudan erişemesin.
+-- Tüm erişim aşağıdaki güvenli RPC fonksiyonları üzerinden yapılır.
+alter table public.admins enable row level security;
+alter table public.admin_sessions enable row level security;
+alter table public.customer_sessions enable row level security;
+alter table public.selections enable row level security;
+alter table public.albums enable row level security;
+alter table public.admin_settings enable row level security;
+
+-- -------------------------------------------------------------
+-- YARDIMCI FONKSİYONLAR
+-- -------------------------------------------------------------
+
+-- Admin oturumu geçerli mi?
+create or replace function public.admin_valid(p_token uuid)
+returns boolean
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select exists (
+    select 1 from public.admin_sessions s
+    join public.admins a on a.id = s.admin_id
+    where s.token = p_token and s.expires_at > now() and a.is_active = true
+  );
+$$;
+
+create or replace function public.session_to_json(p public.customer_sessions)
+returns jsonb
+language sql
+immutable
+as $$
+  select jsonb_build_object(
+    'id', p.id,
+    'code', p.code,
+    'album_path', p.album_path,
+    'album_title', p.album_title,
+    'max_selections', p.max_selections,
+    'min_selections', p.min_selections,
+    'protection_level', p.protection_level,
+    'status', p.status,
+    'expires_at', p.expires_at,
+    'created_at', p.created_at
+  );
+$$;
+
+-- -------------------------------------------------------------
+-- ADMIN RPC'LERİ
+-- -------------------------------------------------------------
+
+-- Giriş: başarılıysa oturum token'ı döner
+create or replace function public.admin_login(p_username text, p_password text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_admin public.admins%rowtype;
+  v_token uuid;
+begin
+  select * into v_admin
+  from public.admins
+  where username = lower(trim(p_username)) and is_active = true;
+
+  if v_admin.id is null or v_admin.password_hash <> crypt(p_password, v_admin.password_hash) then
+    return null;
+  end if;
+
+  insert into public.admin_sessions (admin_id) values (v_admin.id) returning token into v_token;
+
+  return jsonb_build_object(
+    'token', v_token,
+    'username', v_admin.username,
+    'display_name', v_admin.display_name
+  );
+end;
+$$;
+
+-- Oturum bilgisi (token geçerli mi, hangi admin)
+create or replace function public.admin_me(p_token uuid)
+returns jsonb
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select jsonb_build_object(
+    'username', a.username,
+    'display_name', a.display_name,
+    'is_main', a.is_main
+  )
+  from public.admin_sessions s
+  join public.admins a on a.id = s.admin_id
+  where s.token = p_token and s.expires_at > now() and a.is_active = true;
+$$;
+
+create or replace function public.admin_logout(p_token uuid)
+returns void
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  delete from public.admin_sessions where token = p_token;
+$$;
+
+-- Şifre değiştirme
+create or replace function public.admin_change_password(p_token uuid, p_old_password text, p_new_password text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_admin_id uuid;
+  v_hash text;
+begin
+  select s.admin_id into v_admin_id
+  from public.admin_sessions s
+  where s.token = p_token and s.expires_at > now();
+
+  if v_admin_id is null then
+    raise exception 'yetkisiz';
+  end if;
+
+  select password_hash into v_hash from public.admins where id = v_admin_id;
+  if v_hash <> crypt(p_old_password, v_hash) then
+    return false;
+  end if;
+
+  if p_new_password is null or length(p_new_password) < 6 then
+    raise exception 'yeni şifre en az 6 karakter olmalı';
+  end if;
+
+  update public.admins
+  set password_hash = crypt(p_new_password, gen_salt('bf', 10))
+  where id = v_admin_id;
+
+  return true;
+end;
+$$;
+
+-- Yeni admin ekleme
+create or replace function public.admin_create_admin(
+  p_token uuid,
+  p_username text,
+  p_password text,
+  p_display_name text default 'Admin'
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_admin_id uuid;
+  v_new_id uuid;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select s.admin_id into v_admin_id
+  from public.admin_sessions s
+  where s.token = p_token;
+
+  if not exists (select 1 from public.admins where id = v_admin_id and is_main = true) then
+    raise exception 'yalnızca ana admin yeni admin ekleyebilir';
+  end if;
+
+  if p_username is null or length(trim(p_username)) < 3 then
+    raise exception 'kullanıcı adı en az 3 karakter olmalı';
+  end if;
+
+  if p_password is null or length(p_password) < 6 then
+    raise exception 'şifre en az 6 karakter olmalı';
+  end if;
+
+  insert into public.admins (username, password_hash, display_name)
+  values (lower(trim(p_username)), crypt(p_password, gen_salt('bf', 10)), coalesce(nullif(trim(p_display_name), ''), 'Admin'))
+  returning id into v_new_id;
+
+  return jsonb_build_object('id', v_new_id, 'username', lower(trim(p_username)));
+end;
+$$;
+
+-- Admin listesi (yalnızca ana admin)
+create or replace function public.admin_list_admins(p_token uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_result jsonb;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  if not exists (
+    select 1 from public.admin_sessions s
+    join public.admins a on a.id = s.admin_id
+    where s.token = p_token and a.is_main = true
+  ) then
+    raise exception 'yalnızca ana admin adminleri yönetebilir';
+  end if;
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'id', a.id,
+      'username', a.username,
+      'display_name', a.display_name,
+      'is_main', a.is_main,
+      'is_active', a.is_active,
+      'created_at', a.created_at
+    ) order by a.is_main desc, a.created_at asc
+  ), '[]'::jsonb) into v_result
+  from public.admins a;
+
+  return v_result;
+end;
+$$;
+
+-- Admin silme (yalnızca ana admin, ana admin silinemez)
+create or replace function public.admin_delete_admin(p_token uuid, p_admin_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_is_main boolean;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select a.is_main into v_is_main
+  from public.admin_sessions s
+  join public.admins a on a.id = s.admin_id
+  where s.token = p_token;
+
+  if not coalesce(v_is_main, false) then
+    raise exception 'yalnızca ana admin admin silebilir';
+  end if;
+
+  if not exists (select 1 from public.admins where id = p_admin_id) then
+    raise exception 'admin bulunamadı';
+  end if;
+
+  if exists (select 1 from public.admins where id = p_admin_id and is_main = true) then
+    raise exception 'ana admin silinemez';
+  end if;
+
+  if exists (select 1 from public.admin_sessions where admin_id = p_admin_id and token = p_token) then
+    raise exception 'kendi hesabınızı silemezsiniz';
+  end if;
+
+  update public.admins set is_active = false where id = p_admin_id;
+  delete from public.admin_sessions where admin_id = p_admin_id;
+
+  return true;
+end;
+$$;
+
+-- Müşteri seçim linki oluşturma (kod sunucuda üretilir)
+drop function if exists public.admin_create_session(uuid, text, text, text, int, int, timestamptz);
+create or replace function public.admin_create_session(
+  p_token uuid,
+  p_album_path text,
+  p_album_title text,
+  p_password text,
+  p_max_selections int,
+  p_min_selections int default 0,
+  p_protection_level int default 2,
+  p_expires_at timestamptz default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_code text;
+  v_row public.customer_sessions%rowtype;
+  v_admin_id uuid;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  if p_album_path is null or trim(p_album_path) = '' or p_album_title is null or trim(p_album_title) = '' then
+    raise exception 'albüm bilgisi eksik';
+  end if;
+
+  if p_password is null or length(p_password) < 4 then
+    raise exception 'şifre en az 4 karakter olmalı';
+  end if;
+
+  if p_max_selections is null or p_max_selections < 1 or p_max_selections > 500 then
+    raise exception 'geçersiz seçim sayısı';
+  end if;
+
+  if p_min_selections is null or p_min_selections < 0 or p_min_selections > 500 then
+    raise exception 'geçersiz en az seçim sayısı';
+  end if;
+
+  if p_min_selections > p_max_selections then
+    raise exception 'en az seçim sayısı, en fazla seçim sayısından büyük olamaz';
+  end if;
+
+  select s.admin_id into v_admin_id
+  from public.admin_sessions s
+  where s.token = p_token;
+
+  loop
+    -- 6 haneli rastgele kod (000001 gibi, baştaki sıfırlar korunur)
+    v_code := lpad((floor(random() * 1000000))::int::text, 6, '0');
+    exit when not exists (select 1 from public.customer_sessions where code = v_code);
+  end loop;
+
+  insert into public.customer_sessions (
+    code, album_path, album_title, password_hash, password_plain,
+    max_selections, min_selections, protection_level, expires_at, created_by
+  ) values (
+    v_code, trim(p_album_path), trim(p_album_title), crypt(p_password, gen_salt('bf', 10)), p_password,
+    p_max_selections, p_min_selections, p_protection_level, p_expires_at, v_admin_id
+  )
+  returning * into v_row;
+
+  return public.session_to_json(v_row);
+end;
+$$;
+
+-- Oluşturulan tüm linkler
+create or replace function public.admin_list_sessions(p_token uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_result jsonb;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'id', s.id,
+      'code', s.code,
+      'album_path', s.album_path,
+      'album_title', s.album_title,
+      'password', s.password_plain,
+      'max_selections', s.max_selections,
+      'min_selections', s.min_selections,
+      'protection_level', s.protection_level,
+      'status', s.status,
+      'expires_at', s.expires_at,
+      'created_at', s.created_at,
+      'selection_count', (select count(*) from public.selections sel where sel.session_id = s.id)
+    ) order by s.created_at desc
+  ), '[]'::jsonb) into v_result
+  from public.customer_sessions s;
+
+  return v_result;
+end;
+$$;
+
+-- Bir linke yapılan seçimler
+create or replace function public.admin_get_selections(p_token uuid, p_session_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_result jsonb;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'id', sel.id,
+      'photo_ids', sel.photo_ids,
+      'contact_name', sel.contact_name,
+      'contact_phone', sel.contact_phone,
+      'note', sel.note,
+      'submitted_at', sel.submitted_at,
+      'code', s.code,
+      'album_title', s.album_title
+    ) order by sel.submitted_at desc
+  ), '[]'::jsonb) into v_result
+  from public.selections sel
+  join public.customer_sessions s on s.id = sel.session_id
+  where sel.session_id = p_session_id;
+
+  return v_result;
+end;
+$$;
+
+-- Linki iptal etme
+create or replace function public.admin_revoke_session(p_token uuid, p_session_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  update public.customer_sessions
+  set status = 'revoked'
+  where id = p_session_id and status = 'active';
+end;
+$$;
+
+-- Linki tamamen silme (seçimler otomatik silinir)
+create or replace function public.admin_delete_session(p_token uuid, p_session_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  delete from public.customer_sessions
+  where id = p_session_id;
+end;
+$$;
+
+-- Admin bildirim e-posta adresi (seçim yapılınca bu adrese bildirim gider)
+create or replace function public.admin_get_email()
+returns text
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select value from public.admin_settings where key = 'admin_email';
+$$;
+
+create or replace function public.admin_set_email(p_token uuid, p_email text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_is_main boolean;
+begin
+  if not public.admin_valid(p_token) then
+    raise exception 'yetkisiz';
+  end if;
+
+  select a.is_main into v_is_main
+  from public.admin_sessions s
+  join public.admins a on a.id = s.admin_id
+  where s.token = p_token;
+
+  if not coalesce(v_is_main, false) then
+    raise exception 'yalnızca ana admin bildirim e-postasını değiştirebilir';
+  end if;
+
+  if p_email is null or length(trim(p_email)) < 5 or position('@' in p_email) = 0 then
+    raise exception 'geçerli bir e-posta adresi girin';
+  end if;
+
+  insert into public.admin_settings (key, value)
+  values ('admin_email', lower(trim(p_email)))
+  on conflict (key) do update
+    set value = excluded.value, updated_at = now();
+end;
+$$;
+
+-- -------------------------------------------------------------
+-- MÜŞTERİ RPC'LERİ (seçim sayfası)
+-- -------------------------------------------------------------
+
+-- Kod + şifre ile giriş
+create or replace function public.customer_login(p_code text, p_password text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_row public.customer_sessions%rowtype;
+begin
+  select * into v_row
+  from public.customer_sessions
+  where code = lower(trim(p_code)) or code = regexp_replace(trim(p_code), '\D', '', 'g');
+
+  if v_row.id is null then
+    return jsonb_build_object('error', 'not_found');
+  end if;
+
+  if v_row.status = 'revoked' then
+    return jsonb_build_object('error', 'revoked');
+  end if;
+
+  if v_row.status = 'used' then
+    return jsonb_build_object('error', 'already_used');
+  end if;
+
+  if v_row.expires_at is not null and v_row.expires_at < now() then
+    update public.customer_sessions set status = 'expired' where id = v_row.id;
+    return jsonb_build_object('error', 'expired');
+  end if;
+
+  if v_row.password_hash <> crypt(p_password, v_row.password_hash) then
+    return jsonb_build_object('error', 'wrong_password');
+  end if;
+
+  return jsonb_build_object(
+    'ok', true,
+    'session_id', v_row.id,
+    'code', v_row.code,
+    'album_path', v_row.album_path,
+    'album_title', v_row.album_title,
+    'max_selections', v_row.max_selections,
+    'min_selections', v_row.min_selections,
+    'protection_level', v_row.protection_level,
+    'expires_at', v_row.expires_at,
+    'admin_email', (select value from public.admin_settings where key = 'admin_email')
+  );
+end;
+$$;
+
+-- Seçimi kaydet (tek kullanımlık: link otomatik "used" olur)
+create or replace function public.customer_submit_selection(
+  p_session_id uuid,
+  p_photo_ids text[],
+  p_contact_name text default null,
+  p_contact_phone text default null,
+  p_note text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_session public.customer_sessions%rowtype;
+  v_count int;
+begin
+  select * into v_session from public.customer_sessions where id = p_session_id;
+
+  if v_session.id is null then
+    return jsonb_build_object('error', 'not_found');
+  end if;
+
+  if v_session.status = 'used' then
+    return jsonb_build_object('error', 'already_used');
+  end if;
+
+  if v_session.status = 'revoked' then
+    return jsonb_build_object('error', 'revoked');
+  end if;
+
+  if v_session.expires_at is not null and v_session.expires_at < now() then
+    update public.customer_sessions set status = 'expired' where id = v_session.id;
+    return jsonb_build_object('error', 'expired');
+  end if;
+
+  if p_contact_name is null or trim(p_contact_name) = '' then
+    return jsonb_build_object('error', 'contact_required');
+  end if;
+
+  if p_contact_phone is null or trim(p_contact_phone) = '' then
+    return jsonb_build_object('error', 'contact_required');
+  end if;
+
+  v_count := coalesce(array_length(p_photo_ids, 1), 0);
+  if v_count < 1 then
+    return jsonb_build_object('error', 'no_photos');
+  end if;
+
+  if v_count < v_session.min_selections then
+    return jsonb_build_object('error', 'too_few');
+  end if;
+
+  if v_count > v_session.max_selections then
+    return jsonb_build_object('error', 'too_many');
+  end if;
+
+  insert into public.selections (session_id, photo_ids, contact_name, contact_phone, note)
+  values (p_session_id, p_photo_ids, p_contact_name, p_contact_phone, p_note);
+
+  update public.customer_sessions set status = 'used' where id = p_session_id;
+
+  return jsonb_build_object('ok', true, 'count', v_count);
+end;
+$$;
+
+-- -------------------------------------------------------------
+-- İZİNLER
+-- -------------------------------------------------------------
+
+revoke all on table public.admins from anon, authenticated;
+revoke all on table public.admin_sessions from anon, authenticated;
+revoke all on table public.customer_sessions from anon, authenticated;
+revoke all on table public.selections from anon, authenticated;
+revoke all on table public.admin_settings from anon, authenticated;
+
+grant usage on schema public to anon, authenticated;
+grant execute on function public.admin_login(text, text) to anon, authenticated;
+grant execute on function public.admin_me(uuid) to anon, authenticated;
+grant execute on function public.admin_logout(uuid) to anon, authenticated;
+grant execute on function public.admin_change_password(uuid, text, text) to anon, authenticated;
+grant execute on function public.admin_create_admin(uuid, text, text, text) to anon, authenticated;
+grant execute on function public.admin_list_admins(uuid) to anon, authenticated;
+grant execute on function public.admin_delete_admin(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_create_session(uuid, text, text, text, int, int, int, timestamptz) to anon, authenticated;
+grant execute on function public.admin_list_sessions(uuid) to anon, authenticated;
+grant execute on function public.admin_get_selections(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_revoke_session(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_delete_session(uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_get_email() to anon, authenticated;
+grant execute on function public.admin_set_email(uuid, text) to anon, authenticated;
+grant execute on function public.customer_login(text, text) to anon, authenticated;
+grant execute on function public.customer_submit_selection(uuid, text[], text, text, text) to anon, authenticated;
+
+-- -------------------------------------------------------------
+-- VARSAYILAN ADMIN KAYDI
+-- Kullanıcı adı: herdem   Şifre: herdem123
+-- İlk girişten sonra şifreyi değiştirmeyi unutmayın!
+-- -------------------------------------------------------------
+
+insert into public.admins (username, password_hash, display_name, is_main)
+values ('herdem', crypt('herdem123', gen_salt('bf', 10)), 'Foto Herdem Admin', true)
+on conflict (username) do nothing;
+
+-- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
+update public.admins set is_main = true where username = 'herdem';
+
+
+-- =============================================================
+-- Foto Albümleri (metadata Supabase'de, fotoğraflar GitHub'da)
+-- =============================================================
+create table if not exists public.photo_albums (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  folder text not null unique,
+  cover_path text,
+  photo_count int not null default 0,
+  photos jsonb not null default '[]',
+  created_at timestamptz not null default now()
+);
+
+alter table public.photo_albums enable row level security;
+
+create policy "Public read photo_albums"
+  on public.photo_albums for select
+  to anon, authenticated
+  using (true);
+
+create policy "Authenticated insert photo_albums"
+  on public.photo_albums for insert
+  to authenticated
+  with check (true);
+
+create policy "Authenticated update photo_albums"
+  on public.photo_albums for update
+  to authenticated
+  using (true);
+
+create policy "Authenticated delete photo_albums"
+  on public.photo_albums for delete
+  to authenticated
+  using (true);

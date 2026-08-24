@@ -44,6 +44,8 @@
     ["view-setup", "view-login", "view-dashboard"].forEach((id) => {
       $(`#${id}`).hidden = id !== `view-${viewName}`;
     });
+    const ghPanel = $("#github-upload-panel");
+    if (ghPanel) ghPanel.hidden = viewName !== "dashboard";
     $("#topbar-actions").hidden = viewName !== "dashboard";
   }
 
@@ -116,18 +118,26 @@
     const hint = $("#albums-hint");
     const list = $("#albums-list");
 
+    let localAlbums = [];
     try {
       const res = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
       if (!res.ok) {
         throw new Error(`albums.json bulunamadı (HTTP ${res.status})`);
       }
       const manifest = await res.json();
-      state.albums = Array.isArray(manifest.albums) ? manifest.albums : [];
+      localAlbums = Array.isArray(manifest.albums) ? manifest.albums : [];
     } catch (err) {
-      state.albums = [];
       hint.textContent =
-        "Albümler/fotoğraflar klasöründe albüm bulunamadı veya albums.json üretilmemiş. " +
-        "Albümleri klasöre ekledikten sonra: node scripts/build-albums.js";
+        "Albümler/fotoğraflar klasöründe albüm bulunamadı veya albums.json üretilmemiş.";
+      list.innerHTML = "";
+      return;
+    }
+
+    state.albums = localAlbums;
+
+    if (state.albums.length === 0) {
+      hint.textContent =
+        "Albüm yok. Albümler/fotoğraflar klasörüne albüm klasörleri ekleyin.";
       list.innerHTML = "";
       return;
     }
@@ -139,14 +149,6 @@
         state.photoUrl.set(photo, `../Albümler/${encodeURI(photo)}`);
       });
     });
-
-    if (state.albums.length === 0) {
-      hint.textContent =
-        "Albüm yok. Albümler/fotoğraflar klasörüne albüm klasörleri ekleyin ve " +
-        "node scripts/build-albums.js komutunu çalıştırın.";
-      list.innerHTML = "";
-      return;
-    }
 
     hint.textContent = `${state.albums.length} albüm, Albümler/fotoğraflar klasöründen okundu.`;
     list.innerHTML = state.albums
@@ -161,7 +163,10 @@
             <div class="admin-album-body">
               <h3>${escapeHtml(album.title)}</h3>
               <div class="admin-hint">${escapeHtml(album.path)}</div>
-              <button class="btn btn-primary" type="button" data-create-album="${escapeAttr(album.id)}">Link Oluştur</button>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" type="button" data-create-album="${escapeAttr(album.id)}">Link Oluştur</button>
+                <button class="btn btn-secondary" type="button" data-delete-album="${escapeAttr(album.id)}" style="color:#c0392b;">🗑 Sil</button>
+              </div>
             </div>
           </article>`;
       })
@@ -554,6 +559,9 @@
       state.isMain = Boolean(me.is_main);
       $("#admins-panel").hidden = !state.isMain;
       $("#email-panel").hidden = !state.isMain;
+      // Upload paneli herkese açık, token ayarı sadece ana admin
+      const ghTokenSection = document.getElementById("gh-token-details");
+      if (ghTokenSection) ghTokenSection.hidden = !state.isMain;
       const tasks = [loadAlbums(), loadSessions()];
       if (state.isMain) {
         tasks.push(loadAdminEmail(), loadAdmins());
@@ -668,6 +676,13 @@
       });
     });
 
+    $("#albums-list").addEventListener("click", (e) => {
+      const delBtn = e.target.closest("[data-delete-album]");
+      if (delBtn) {
+        deleteAlbumFromGithub(delBtn.dataset.deleteAlbum);
+      }
+    });
+
     $("#btn-refresh-albums").addEventListener("click", loadAlbums);
     $("#btn-refresh-sessions").addEventListener("click", loadSessions);
     $("#btn-close-selections").addEventListener("click", () => {
@@ -762,7 +777,259 @@
     });
   }
 
+
+  // ---------- GitHub Fotoğraf Yükleme / Silme ----------
+
+  const GH_REPO_OWNER = "MuhammedAkay";
+  const GH_REPO_NAME = "Foto-Herdem";
+  const GH_BRANCH = "main";
+
+  function getGhToken() {
+    return sessionStorage.getItem("fh_gh_token") || "";
+  }
+
+  function setGhToken(token) {
+    sessionStorage.setItem("fh_gh_token", token);
+  }
+
+  async function ghApi(path, options = {}) {
+    const token = getGhToken();
+    if (!token) throw new Error("GitHub token ayarlanmamış. Önce token girin.");
+    const res = await fetch(`https://api.github.com${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        ...options.headers
+      }
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || `GitHub API hatası: ${res.status}`);
+    }
+    return res.json();
+  }
+
+  function slugifyFolder(name) {
+    return name.trim().toLowerCase()
+      .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
+      .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+
+  async function convertToWebP(file, maxBytes = 20 * 1024 * 1024) {
+    return new Promise((resolve, reject) => {
+      if (file.type === "image/webp" && file.size <= maxBytes) {
+        resolve(file);
+        return;
+      }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let quality = 0.85;
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        function tryEncode() {
+          canvas.toBlob((blob) => {
+            if (!blob) { reject(new Error("WebP dönüşümü başarısız")); return; }
+            if (blob.size <= maxBytes || quality <= 0.3) {
+              const webpFile = new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
+              resolve(webpFile);
+            } else {
+              quality -= 0.15;
+              tryEncode();
+            }
+          }, "image/webp", quality);
+        }
+        tryEncode();
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Görsel okunamadı")); };
+      img.src = url;
+    });
+  }
+
+  async function uploadToGithub(filePath, contentBase64, message) {
+    // Check if file exists to get SHA (for update)
+    let sha = undefined;
+    try {
+      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
+      sha = existing.sha;
+    } catch (_) { /* doesn't exist yet */ }
+
+    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        message,
+        content: contentBase64,
+        branch: GH_BRANCH,
+        ...(sha ? { sha } : {})
+      })
+    });
+  }
+
+  async function deleteFromGithub(filePath) {
+    let sha;
+    try {
+      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
+      sha = existing.sha;
+    } catch (_) {
+      return; // already gone
+    }
+    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
+      method: "DELETE",
+      body: JSON.stringify({ message: `Silindi: ${filePath}`, branch: GH_BRANCH, sha })
+    });
+  }
+
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
+  async function handleGithubUpload(form) {
+    const albumName = form.querySelector("#gh-album-name").value.trim();
+    const fileInput = form.querySelector("#gh-files");
+    const files = Array.from(fileInput.files || []);
+
+    if (!albumName) { setStatus(form, "Albüm adı girin.", true); return; }
+    if (!files.length) { setStatus(form, "En az bir fotoğraf seçin.", true); return; }
+    if (!getGhToken()) { setStatus(form, "GitHub token ayarlanmamış.", true); return; }
+
+    const folder = slugifyFolder(albumName);
+    const progressWrap = $("#gh-progress-wrap");
+    const progressBar = $("#gh-progress-bar");
+    const statusText = $("#gh-status-text");
+
+    progressWrap.hidden = false;
+    setStatus(form, "");
+
+    try {
+      const photoPaths = [];
+
+      for (let i = 0; i < files.length; i++) {
+        statusText.textContent = `${files[i].name} → WebP dönüşümü…`;
+        const webpFile = await convertToWebP(files[i]);
+
+        statusText.textContent = `${webpFile.name} yükleniyor (${i + 1}/${files.length})…`;
+        const buffer = await webpFile.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+        const path = `Albümler/fotoğraflar/${folder}/${webpFile.name}`;
+
+        await uploadToGithub(path, base64, `📷 ${albumName}: ${webpFile.name}`);
+        photoPaths.push(`fotoğraflar/${folder}/${webpFile.name}`);
+
+        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+        setStatus(form, `${i + 1}/${files.length} tamamlandı`);
+      }
+
+      // albums.json güncelle
+      statusText.textContent = "albums.json güncelleniyor…";
+      await rebuildAlbumsJson();
+
+      setStatus(form, "");
+      form.reset();
+      $("#gh-file-info").textContent = "";
+      alert(`✅ ${photoPaths.length} fotoğraf yüklendi!`);
+      await loadAlbums();
+
+    } catch (err) {
+      console.error(err);
+      setStatus(form, err.message || "Yükleme hatası", true);
+    } finally {
+      setTimeout(() => { progressWrap.hidden = true; }, 3000);
+    }
+  }
+
+  async function rebuildAlbumsJson() {
+    // Mevcut manifest'i al
+    let manifest;
+    try {
+      const res = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
+      manifest = await res.json();
+    } catch (_) {
+      manifest = { generatedAt: "", albumFolder: "fotoğraflar", albums: [] };
+    }
+
+    // Yeni klasörü tara (GitHub tree API ile)
+    const treeData = await ghApi(
+      `/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/git/trees/${GH_BRANCH}?recursive=1`
+    );
+
+    const photoFiles = treeData.tree.filter(
+      (item) => item.path.startsWith("Albümler/fotoğraflar/") &&
+                item.type === "blob" &&
+                /\.(jpg|jpeg|png|webp|gif)$/i.test(item.path)
+    );
+
+    // Klasörlere grupla
+    const folders = {};
+    for (const item of photoFiles) {
+      const relPath = item.path.replace("Albümler/", "");
+      const folderPath = relPath.split("/")[0] + "/" + relPath.split("/")[1];
+      if (!folders[folderPath]) folders[folderPath] = [];
+      folders[folderPath].push(relPath);
+    }
+
+    const albums = Object.entries(folders).map(([path, photos]) => {
+      photos.sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
+      const folderName = path.split("/")[1];
+      return {
+        id: slugifyFolder(folderName),
+        title: folderName.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+        path,
+        cover: photos[0],
+        photoCount: photos.length,
+        photos
+      };
+    }).sort((a, b) => a.title.localeCompare(b.title, "tr"));
+
+    const updated = {
+      generatedAt: new Date().toISOString(),
+      albumFolder: "fotoğraflar",
+      albums
+    };
+
+    const jsonContent = JSON.stringify(updated, null, 2) + "\n";
+    const base64 = btoa(unescape(encodeURIComponent(jsonContent)));
+    await uploadToGithub("Albümler/albums.json", base64, "🤖 albums.json güncellendi");
+  }
+
+  async function deleteAlbumFromGithub(albumId) {
+    if (!confirm(`"${albumId}" albümündeki tüm fotoğraflar silinecek. Emin misiniz?`)) return;
+
+    try {
+      // Albümün dosyalarını bul
+      const album = state.albumById.get(albumId);
+      if (!album || !album.photos?.length) {
+        alert("Albüm bulunamadı.");
+        return;
+      }
+
+      for (const photo of album.photos) {
+        const filePath = `Albümler/${photo}`;
+        try {
+          await deleteFromGithub(filePath);
+        } catch (_) { /* skip */ }
+      }
+
+      await rebuildAlbumsJson();
+      alert("✅ Albüm silindi.");
+      await loadAlbums();
+    } catch (err) {
+      alert("Silme hatası: " + err.message);
+    }
+  }
+
+
   // ---------- Başlangıç ----------
+
 
   function init() {
     bindEvents();
@@ -784,4 +1051,3 @@
 
   document.addEventListener("DOMContentLoaded", init);
 })();
-

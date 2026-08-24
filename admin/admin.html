@@ -88,6 +88,46 @@
         </div>
       </div>
 
+      <section class="panel admin-panel" id="github-upload-panel" hidden>
+        <div class="admin-panel-head">
+          <div>
+            <div class="eyebrow">GitHub Yükleme</div>
+            <h2>Albüm Fotoğrafları Yükle</h2>
+          </div>
+        </div>
+        <details id="gh-token-details" style="margin-bottom:16px;">
+          <summary style="cursor:pointer;font-weight:600;color:#8d5c3b;">🔑 GitHub Token Ayarı (ilk sefer)</summary>
+          <div class="field" style="margin-top:12px;">
+            <label for="gh-token-input">GitHub Personal Access Token</label>
+            <input type="password" id="gh-token-input" placeholder="ghp_...">
+            <small class="admin-hint">Settings → Developer settings → Personal access tokens → repo yetkisi</small>
+            <button class="btn btn-dark btn-sm" type="button" id="btn-save-gh-token" style="margin-top:8px;">Kaydet</button>
+          </div>
+        </details>
+        <form class="form admin-create-form" id="gh-upload-form">
+          <div class="field">
+            <label for="gh-album-name">Albüm Adı</label>
+            <input id="gh-album-name" placeholder="örn: Ayşe-Ahmet Düğün 2026" required>
+            <small class="admin-hint">Klasör adı otomatik oluşturulur.</small>
+          </div>
+          <div class="field">
+            <label for="gh-files">Fotoğraflar (çoklu seçim)</label>
+            <input id="gh-files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.avif" required>
+            <small class="admin-hint" id="gh-file-info">Otomatik WebP'ye dönüştürülür, 20MB altına sıkıştırılır.</small>
+          </div>
+          <div id="gh-progress-wrap" hidden style="margin-top:12px;">
+            <div style="background:#eee;border-radius:8px;overflow:hidden;height:22px;">
+              <div id="gh-progress-bar" style="height:100%;background:#8d5c3b;width:0%;transition:width .3s;"></div>
+            </div>
+            <small class="admin-hint" id="gh-status-text"></small>
+          </div>
+          <div class="admin-actions">
+            <button class="btn btn-primary" type="submit" id="btn-gh-upload">Yükle</button>
+          </div>
+          <div class="form-status" data-status></div>
+        </form>
+      </section>
+
       <section class="panel admin-panel">
         <div class="admin-panel-head">
           <h2>Albümler</h2>

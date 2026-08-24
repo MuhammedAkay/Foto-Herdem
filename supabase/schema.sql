@@ -736,3 +736,39 @@ on conflict (username) do nothing;
 -- Mevcut kurulumlarda 'herdem' ana admin olarak işaretlensin
 update public.admins set is_main = true where username = 'herdem';
 
+
+-- =============================================================
+-- Foto Albümleri (metadata Supabase'de, fotoğraflar GitHub'da)
+-- =============================================================
+create table if not exists public.photo_albums (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  folder text not null unique,
+  cover_path text,
+  photo_count int not null default 0,
+  photos jsonb not null default '[]',
+  created_at timestamptz not null default now()
+);
+
+alter table public.photo_albums enable row level security;
+
+create policy "Public read photo_albums"
+  on public.photo_albums for select
+  to anon, authenticated
+  using (true);
+
+create policy "Authenticated insert photo_albums"
+  on public.photo_albums for insert
+  to authenticated
+  with check (true);
+
+create policy "Authenticated update photo_albums"
+  on public.photo_albums for update
+  to authenticated
+  using (true);
+
+create policy "Authenticated delete photo_albums"
+  on public.photo_albums for delete
+  to authenticated
+  using (true);
+

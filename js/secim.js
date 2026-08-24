@@ -192,24 +192,10 @@
   // ---------- Galeri ----------
 
   async function loadAlbumManifest() {
-    if (!state.supabase) {
-      state.supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-    }
-    const { data, error } = await state.supabase
-      .from("photo_albums")
-      .select("title, folder, cover_path, photo_count, photos")
-      .order("created_at", { ascending: false });
-    
-    if (error) throw new Error("Albümler yüklenemedi: " + error.message);
-    
-    return (data || []).map((row) => ({
-      id: row.folder,
-      title: row.title,
-      path: `fotoğraflar/${row.folder}`;
-      cover: row.cover_path,
-      photoCount: row.photo_count,
-      photos: row.photos
-    }));
+    const response = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
+    if (!response.ok) throw new Error("Albüm listesi okunamadı.");
+    const manifest = await response.json();
+    return manifest.albums || [];
   }
 
   function renderGallery() {

@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-08-21T22:57:04.815Z",
+  "albumFolder": "fotoğraflar",
+  "albums": [
+    {
+      "id": "kina-gecesi-2026",
+      "title": "Kina Gecesi 2026",
+      "path": "fotoğraflar/kina-gecesi-2026",
+      "cover": "fotoğraflar/kina-gecesi-2026/01.jpg",
+      "photoCount": 3,
+      "photos": [
+        "fotoğraflar/kina-gecesi-2026/01.jpg",
+        "fotoğraflar/kina-gecesi-2026/02.jpg",
+        "fotoğraflar/kina-gecesi-2026/03.jpg"
+      ]
+    },
+    {
+      "id": "nisan-seans-2026",
+      "title": "Nisan Seansı 2026",
+      "path": "fotoğraflar/nisan-seansı-2026",
+      "cover": "fotoğraflar/nisan-seansı-2026/01.jpg",
+      "photoCount": 3,
+      "photos": [
+        "fotoğraflar/nisan-seansı-2026/01.jpg",
+        "fotoğraflar/nisan-seansı-2026/02.jpg",
+        "fotoğraflar/nisan-seansı-2026/03.jpg"
+      ]
+    },
+    {
+      "id": "nisan-seansi-2026",
+      "title": "Nisan Seansi 2026",
+      "path": "fotoğraflar/nisan-seansi-2026",
+      "cover": "fotoğraflar/nisan-seansi-2026/01.jpg",
+      "photoCount": 3,
+      "photos": [
+        "fotoğraflar/nisan-seansi-2026/01.jpg",
+        "fotoğraflar/nisan-seansi-2026/02.jpg",
+        "fotoğraflar/nisan-seansi-2026/03.jpg"
+      ]
+    }
+  ]
+}

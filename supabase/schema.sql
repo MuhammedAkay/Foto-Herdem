@@ -737,73 +737,9 @@ on conflict (username) do nothing;
 update public.admins set is_main = true where username = 'herdem';
 
 
--- =============================================================
--- Foto Albümleri (metadata Supabase'de, fotoğraflar GitHub'da)
--- =============================================================
-create table if not exists public.photo_albums (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  folder text not null unique,
-  cover_path text,
-  photo_count int not null default 0,
-  photos jsonb not null default '[]',
-  created_at timestamptz not null default now()
-);
-
-alter table public.photo_albums enable row level security;
-
-drop policy if exists "Public read photo_albums" on public.photo_albums;
-drop policy if exists "Authenticated insert photo_albums" on public.photo_albums;
-drop policy if exists "Authenticated update photo_albums" on public.photo_albums;
-drop policy if exists "Authenticated delete photo_albums" on public.photo_albums;
-
-create policy "Public read photo_albums"
-  on public.photo_albums for select
-  to anon, authenticated
-  using (true);
-
-create policy "Authenticated insert photo_albums"
-  on public.photo_albums for insert
-  to authenticated
-  with check (true);
-
-create policy "Authenticated update photo_albums"
-  on public.photo_albums for update
-  to authenticated
-  using (true);
-
-create policy "Authenticated delete photo_albums"
-  on public.photo_albums for delete
-  to authenticated
-  using (true);
-
--- =============================================================
--- Uygulama Ayarları (GitHub token vb.)
--- =============================================================
-create table if not exists public.app_settings (
-  key text primary key,
-  value text not null,
-  updated_at timestamptz not null default now()
-);
-
-alter table public.app_settings enable row level security;
-
-drop policy if exists "Authenticated read app_settings" on public.app_settings;
-drop policy if exists "Authenticated write app_settings" on public.app_settings;
-drop policy if exists "Authenticated update app_settings" on public.app_settings;
-
-create policy "Authenticated read app_settings"
-  on public.app_settings for select
-  to authenticated
-  using (true);
-
-create policy "Authenticated write app_settings"
-  on public.app_settings for insert
-  to authenticated
-  with check (true);
-
-create policy "Authenticated update app_settings"
-  on public.app_settings for update
-  to authenticated
-  using (true);
-
+-- -------------------------------------------------------------
+-- Fotoğraflar GitHub deposunda, albüm listesi Albümler/albums.json
+-- dosyasından okunur. Geçici GitHub entegrasyonu tabloları temizlenir.
+-- -------------------------------------------------------------
+drop table if exists public.photo_albums cascade;
+drop table if exists public.app_settings cascade;

@@ -684,6 +684,25 @@
     });
 
     $("#btn-refresh-albums").addEventListener("click", loadAlbums);
+
+    $("#gh-upload-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleGithubUpload(e.currentTarget);
+    });
+
+    $("#gh-files").addEventListener("change", (e) => {
+      const count = e.target.files ? e.target.files.length : 0;
+      const info = $("#gh-file-info");
+      if (info) info.textContent = count > 0 ? `${count} dosya seçildi` : "";
+    });
+
+    $("#btn-save-gh-token").addEventListener("click", () => {
+      const val = $("#gh-token-input").value.trim();
+      if (!val) { alert("Token boş olamaz."); return; }
+      setGhToken(val);
+      alert("✅ Token kaydedildi.");
+      $("#gh-token-input").value = "";
+    });
     $("#btn-refresh-sessions").addEventListener("click", loadSessions);
     $("#btn-close-selections").addEventListener("click", () => {
       $("#selections-panel").hidden = true;

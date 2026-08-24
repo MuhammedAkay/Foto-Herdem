@@ -44,8 +44,6 @@
     ["view-setup", "view-login", "view-dashboard"].forEach((id) => {
       $(`#${id}`).hidden = id !== `view-${viewName}`;
     });
-    const ghPanel = $("#github-upload-panel");
-    if (ghPanel) ghPanel.hidden = viewName !== "dashboard";
     $("#topbar-actions").hidden = viewName !== "dashboard";
   }
 
@@ -119,21 +117,10 @@
     const list = $("#albums-list");
 
     try {
-      const { data, error } = await state.supabase
-        .from("photo_albums")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      
-      state.albums = (data || []).map((row) => ({
-        id: row.folder,
-        title: row.title,
-        path: `fotoğraflar/${row.folder}`,
-        cover: row.cover_path,
-        photoCount: row.photo_count,
-        photos: row.photos
-      }));
+      const response = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
+      if (!response.ok) throw new Error("albums.json okunamadı");
+      const manifest = await response.json();
+      state.albums = manifest.albums || [];
     } catch (err) {
       console.warn("loadAlbums:", err.message);
       state.albums = [];
@@ -175,7 +162,6 @@
               <div class="admin-hint">${escapeHtml(album.path)}</div>
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-primary" type="button" data-create-album="${escapeAttr(album.id)}">Link Oluştur</button>
-                <button class="btn btn-secondary" type="button" data-delete-album="${escapeAttr(album.id)}" style="color:#c0392b;">🗑 Sil</button>
               </div>
             </div>
           </article>`;
@@ -570,8 +556,6 @@
       $("#admins-panel").hidden = !state.isMain;
       $("#email-panel").hidden = !state.isMain;
       // Upload paneli herkese açık, token ayarı sadece ana admin
-      const ghTokenSection = document.getElementById("gh-token-details");
-      if (ghTokenSection) ghTokenSection.hidden = !state.isMain;
       const tasks = [loadAlbums(), loadSessions()];
       if (state.isMain) {
         tasks.push(loadAdminEmail(), loadAdmins());
@@ -686,37 +670,7 @@
       });
     });
 
-    $("#albums-list").addEventListener("click", (e) => {
-      const delBtn = e.target.closest("[data-delete-album]");
-      if (delBtn) {
-        deleteAlbumFromGithub(delBtn.dataset.deleteAlbum);
-      }
-    });
-
     $("#btn-refresh-albums").addEventListener("click", loadAlbums);
-
-    $("#gh-upload-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      handleGithubUpload(e.currentTarget);
-    });
-
-    $("#gh-files").addEventListener("change", (e) => {
-      const count = e.target.files ? e.target.files.length : 0;
-      const info = $("#gh-file-info");
-      if (info) info.textContent = count > 0 ? `${count} dosya seçildi` : "";
-    });
-
-    $("#btn-save-gh-token").addEventListener("click", async () => {
-      const val = $("#gh-token-input").value.trim();
-      if (!val) { alert("Token boş olamaz."); return; }
-      try {
-        await saveGhToken(val);
-        alert("✅ Token veritabanına kaydedildi.");
-        $("#gh-token-input").value = "";
-      } catch (err) {
-        alert("Kayıt hatası: " + err.message);
-      }
-    });
     $("#btn-refresh-sessions").addEventListener("click", loadSessions);
     $("#btn-close-selections").addEventListener("click", () => {
       $("#selections-panel").hidden = true;
@@ -808,250 +762,6 @@
     document.querySelectorAll("[data-year]").forEach((node) => {
       node.textContent = new Date().getFullYear();
     });
-  }
-
-
-  // ---------- GitHub Fotoğraf Yükleme / Silme ----------
-
-  const GH_REPO_OWNER = "MuhammedAkay";
-  const GH_REPO_NAME = "Foto-Herdem";
-  const GH_BRANCH = "main";
-
-  async function getGhToken() {
-    const { data, error } = await state.supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "github_token")
-      .single();
-    return (!error && data) ? data.value : "";
-  }
-
-  async function saveGhToken(token) {
-    const { error } = await state.supabase
-      .from("app_settings")
-      .upsert({ key: "github_token", value: token }, { on_conflict: "key" });
-    if (error) throw error;
-  }
-
-  async function ghApi(path, options = {}) {
-    const token = await getGhToken();
-    if (!token) throw new Error("GitHub token ayarlanmamış. Önce token girin.");
-    const res = await fetch(`https://api.github.com${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        ...options.headers
-      }
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.message || `GitHub API hatası: ${res.status}`);
-    }
-    return res.json();
-  }
-
-  function slugifyFolder(name) {
-    return name.trim().toLowerCase()
-      .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
-      .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  }
-
-  async function convertToWebP(file, maxBytes = 20 * 1024 * 1024) {
-    return new Promise((resolve, reject) => {
-      if (file.type === "image/webp" && file.size <= maxBytes) {
-        resolve(file);
-        return;
-      }
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        let quality = 0.85;
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        function tryEncode() {
-          canvas.toBlob((blob) => {
-            if (!blob) { reject(new Error("WebP dönüşümü başarısız")); return; }
-            if (blob.size <= maxBytes || quality <= 0.3) {
-              const webpFile = new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
-              resolve(webpFile);
-            } else {
-              quality -= 0.15;
-              tryEncode();
-            }
-          }, "image/webp", quality);
-        }
-        tryEncode();
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Görsel okunamadı")); };
-      img.src = url;
-    });
-  }
-
-  async function uploadToGithub(filePath, contentBase64, message) {
-    // Check if file exists to get SHA (for update)
-    let sha = undefined;
-    try {
-      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
-      sha = existing.sha;
-    } catch (_) { /* doesn't exist yet */ }
-
-    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message,
-        content: contentBase64,
-        branch: GH_BRANCH,
-        ...(sha ? { sha } : {})
-      })
-    });
-  }
-
-  async function deleteFromGithub(filePath) {
-    let sha;
-    try {
-      const existing = await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}?ref=${GH_BRANCH}`);
-      sha = existing.sha;
-    } catch (_) {
-      return; // already gone
-    }
-    await ghApi(`/repos/${GH_REPO_OWNER}/${GH_REPO_NAME}/contents/${encodeURIComponent(filePath)}`, {
-      method: "DELETE",
-      body: JSON.stringify({ message: `Silindi: ${filePath}`, branch: GH_BRANCH, sha })
-    });
-  }
-
-  function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    return btoa(binary);
-  }
-
-  async function handleGithubUpload(form) {
-    const albumName = form.querySelector("#gh-album-name").value.trim();
-    const fileInput = form.querySelector("#gh-files");
-    const files = Array.from(fileInput.files || []);
-
-    if (!albumName) { setStatus(form, "Albüm adı girin.", true); return; }
-    if (!files.length) { setStatus(form, "En az bir fotoğraf seçin.", true); return; }
-    const ghTok = await getGhToken();
-    if (!ghTok) { setStatus(form, "GitHub token ayarlanmamış.", true); return; }
-
-    const folder = slugifyFolder(albumName);
-    const progressWrap = $("#gh-progress-wrap");
-    const progressBar = $("#gh-progress-bar");
-    const statusText = $("#gh-status-text");
-
-    progressWrap.hidden = false;
-    setStatus(form, "");
-
-    try {
-      const photoPaths = [];
-
-      for (let i = 0; i < files.length; i++) {
-        statusText.textContent = `${files[i].name} → WebP dönüşümü…`;
-        const webpFile = await convertToWebP(files[i]);
-
-        statusText.textContent = `${webpFile.name} yükleniyor (${i + 1}/${files.length})…`;
-        const buffer = await webpFile.arrayBuffer();
-        const base64 = arrayBufferToBase64(buffer);
-        const path = `Albümler/fotoğraflar/${folder}/${webpFile.name}`;
-
-        await uploadToGithub(path, base64, `📷 ${albumName}: ${webpFile.name}`);
-        photoPaths.push(`fotoğraflar/${folder}/${webpFile.name}`);
-
-        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
-        setStatus(form, `${i + 1}/${files.length} tamamlandı`);
-      }
-
-      // Supabase'e albüm kaydet
-      statusText.textContent = "Veritabanına kaydediliyor…";
-      const { error: dbError } = await state.supabase.from("photo_albums").upsert({
-        title: albumName,
-        folder: folder,
-        cover_path: photoPaths[0],
-        photo_count: photoPaths.length,
-        photos: photoPaths
-      }, { on_conflict: "folder" });
-      
-      if (dbError) throw new Error("DB hatası: " + dbError.message);
-
-      setStatus(form, "");
-      form.reset();
-      $("#gh-file-info").textContent = "";
-
-      // Yeni albümü doğrudan state'e ekle (server fetch beklemeden)
-      const albumId = folder;
-      const existingIdx = state.albums.findIndex(a => a.id === albumId);
-      const newAlbum = {
-        id: albumId,
-        title: albumName,
-        path: `fotoğraflar/${folder}`,
-        cover: photoPaths[0],
-        photoCount: photoPaths.length,
-        photos: [...photoPaths]
-      };
-      if (existingIdx >= 0) {
-        state.albums[existingIdx] = newAlbum;
-      } else {
-        state.albums.unshift(newAlbum);
-      }
-      state.albumById.set(albumId, newAlbum);
-      state.photoUrl = state.photoUrl || new Map();
-      newAlbum.photos.forEach(p => {
-        state.photoUrl.set(p, `../Albümler/${encodeURI(p)}`);
-      });
-
-      alert(`✅ ${photoPaths.length} fotoğraf yüklendi!`);
-      renderAlbumList();
-
-    } catch (err) {
-      console.error(err);
-      setStatus(form, err.message || "Yükleme hatası", true);
-    } finally {
-      setTimeout(() => { progressWrap.hidden = true; }, 3000);
-    }
-  }
-
-  async function deleteAlbumFromGithub(albumId) {
-    if (!confirm(`"${albumId}" albümündeki tüm fotoğraflar silinecek. Emin misiniz?`)) return;
-
-    try {
-      // Albümün dosyalarını bul
-      const album = state.albumById.get(albumId);
-      if (!album || !album.photos?.length) {
-        alert("Albüm bulunamadı.");
-        return;
-      }
-
-      for (const photo of album.photos) {
-        const filePath = `Albümler/${photo}`;
-        try {
-          await deleteFromGithub(filePath);
-        } catch (_) { /* skip */ }
-      }
-
-      // Supabase'den sil
-      const { error: dbErr } = await state.supabase
-        .from("photo_albums")
-        .delete()
-        .eq("folder", albumId);
-      if (dbErr) throw dbErr;
-
-      state.albums = state.albums.filter(a => a.id !== albumId);
-      state.albumById.delete(albumId);
-      alert("✅ Albüm ve fotoğraflar silindi.");
-      renderAlbumList();
-    } catch (err) {
-      alert("Silme hatası: " + err.message);
-    }
   }
 
 

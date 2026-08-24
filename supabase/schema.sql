@@ -752,6 +752,11 @@ create table if not exists public.photo_albums (
 
 alter table public.photo_albums enable row level security;
 
+drop policy if exists "Public read photo_albums" on public.photo_albums;
+drop policy if exists "Authenticated insert photo_albums" on public.photo_albums;
+drop policy if exists "Authenticated update photo_albums" on public.photo_albums;
+drop policy if exists "Authenticated delete photo_albums" on public.photo_albums;
+
 create policy "Public read photo_albums"
   on public.photo_albums for select
   to anon, authenticated
@@ -769,6 +774,36 @@ create policy "Authenticated update photo_albums"
 
 create policy "Authenticated delete photo_albums"
   on public.photo_albums for delete
+  to authenticated
+  using (true);
+
+-- =============================================================
+-- Uygulama Ayarları (GitHub token vb.)
+-- =============================================================
+create table if not exists public.app_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.app_settings enable row level security;
+
+drop policy if exists "Authenticated read app_settings" on public.app_settings;
+drop policy if exists "Authenticated write app_settings" on public.app_settings;
+drop policy if exists "Authenticated update app_settings" on public.app_settings;
+
+create policy "Authenticated read app_settings"
+  on public.app_settings for select
+  to authenticated
+  using (true);
+
+create policy "Authenticated write app_settings"
+  on public.app_settings for insert
+  to authenticated
+  with check (true);
+
+create policy "Authenticated update app_settings"
+  on public.app_settings for update
   to authenticated
   using (true);
 

@@ -611,13 +611,23 @@
       // önce buraya kaydedelim ki seçim bildirimleri doğru adrese gitsin.
       await rpc("admin_set_email", { p_token: token(), p_email: email });
 
+      const testAt = new Intl.DateTimeFormat("tr-TR", {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul",
+      }).format(new Date());
+
       await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          _subject: "📷 Foto Herdem — Test Bildirimi",
-          _template: "box",
-          Mesaj: "Bu bir test bildirimidir. Bundan sonra müşteri seçim bildirimleri bu adrese iletilecek.",
+          _subject: "Foto Herdem • Test Bildirimi",
+          _template: "table",
+          "Bildirim Türü": "Test mesajı",
+          "Hedef Adres": email,
+          "Test Zamanı": testAt,
+          "Durum": "Bağlantı hazır",
+          "Açıklama": "Müşteri seçimleri artık bu adrese albüm, kod, iletişim bilgileri ve dosya adlarıyla gönderilecek.",
         }),
       });
       alert(

@@ -11,7 +11,7 @@
     supabase: null,
     session: null,
     album: null,
-    selected: new Map(), // photoPath -> sıra
+    selected: new Map(),
     maxSelections: 10,
     minSelections: 0,
     photoUrl: new Map(),
@@ -449,29 +449,48 @@
       }
       if (!adminEmail) return;
 
-      const photoList = info.photoNames.map((p) => `• ${p}`).join("\n");
-      const displayCode = /^\d{6}$/.test(info.code || "")
-        ? `${info.code.slice(0, 3)}-${info.code.slice(3)}`
-        : info.code || "—";
+      const displayCode = formatSelectionCode(info.code);
+      const submittedAt = new Intl.DateTimeFormat("tr-TR", {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul",
+      }).format(new Date());
+
+      const whatsappNumber = info.contactPhone.replace(/\D/g, "").replace(/^0/, "90");
+      const fields = {
+        _subject: `Yeni Fotoğraf Seçimi • ${info.albumTitle} • ${displayCode}`,
+        _template: "table",
+        "Albüm": info.albumTitle || "—",
+        "Seçim Kodu": displayCode,
+        "Gelin / Damat": info.contactName,
+        "Telefon": info.contactPhone,
+        "WhatsApp": `https://wa.me/${whatsappNumber}`,
+        "Seçim Tarihi": submittedAt,
+        "Toplam Seçim": `${info.photoNames.length} fotoğraf`,
+        "Müşteri Notu": info.note?.trim() || "Yok",
+      };
+
+      info.photoNames.forEach((photoPath, index) => {
+        const fileName = decodeURI(photoPath).split("/").pop() || photoPath;
+        fields[`Fotoğraf ${String(index + 1).padStart(3, "0")}`] = fileName;
+      });
 
       await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          _subject: `📷 Fotoğraf Seçimi — ${info.albumTitle}`,
-          _template: "box",
-          "Seçim Kodu": displayCode,
-          "Albüm": info.albumTitle,
-          "Gelin / Damat": info.contactName,
-          "Telefon": info.contactPhone,
-          "Not": info.note || "—",
-          "Seçilen Fotoğraf Sayısı": String(info.photoNames.length),
-          "Seçilen Fotoğraf Dosya Adları": photoList,
-        }),
+        body: JSON.stringify(fields),
       });
     } catch (_) {
       // Bildirim gönderilemese bile seçim zaten kaydedilmiştir.
     }
+  }
+
+  function formatSelectionCode(code) {
+    const value = String(code || "").trim();
+    if (/^\d{6}$/.test(value)) {
+      return `${value.slice(0, 3)}-${value.slice(3)}`;
+    }
+    return value || "—";
   }
 
   function escapeHtml(value) {

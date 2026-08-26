@@ -1,10 +1,16 @@
 {
   "applinks": {
     "apps": [],
-    "details": []
+    "details": [
+      {
+        "appID": "TEAMID.com.fotoherdem.app",
+        "paths": ["/secim/*", "/admin/*"]
+      }
+    ]
   },
   "webcredentials": {
-    "apps": []
+    "apps": [
+      "TEAMID.com.fotoherdem.app"
+    ]
   }
 }
-

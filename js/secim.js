@@ -12,7 +12,7 @@
     supabase: null,
     session: null,
     album: null,
-    selected: new Map(),
+    selected: new Map(), // photoPath -> sıra
     maxSelections: 10,
     minSelections: 0,
     photoUrl: new Map(),
@@ -193,6 +193,23 @@
   // ---------- Galeri ----------
 
   async function loadAlbumManifest() {
+    if (state.supabase) {
+      const { data, error } = await state.supabase
+        .from("photo_albums")
+        .select("folder, title, path, cover, photo_count, photos")
+        .order("updated_at", { ascending: false });
+      if (data && !error) {
+        return data.map((row) => ({
+          id: row.folder,
+          title: row.title,
+          path: row.path,
+          cover: row.cover,
+          photoCount: row.photo_count,
+          photos: row.photos || [],
+        }));
+      }
+    }
+
     const urls = [
       ALBUMS_MANIFEST,
       "Albümler/albums.json",

@@ -2,7 +2,6 @@
   "use strict";
 
   const CONFIG = window.FH_CONFIG || {};
-  const ALBUMS_MANIFEST = CONFIG.ALBUMS_URL || "Albümler/albums.json";
   const PHOTO_BASE = CONFIG.PHOTO_URL || "Albümler/";
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -210,23 +209,7 @@
       }
     }
 
-    const urls = [
-      ALBUMS_MANIFEST,
-      "Albümler/albums.json",
-    ].filter((value, index, all) => all.indexOf(value) === index);
-
-    let lastError = null;
-    for (const url of urls) {
-      try {
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const manifest = await response.json();
-        return manifest.albums || [];
-      } catch (err) {
-        lastError = err;
-      }
-    }
-    throw new Error(lastError?.message || "Albüm listesi okunamadı.");
+    throw new Error("Albüm listesi okunamadı.");
   }
 
   function renderGallery() {

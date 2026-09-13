@@ -737,9 +737,28 @@ on conflict (username) do nothing;
 update public.admins set is_main = true where username = 'herdem';
 
 
--- -------------------------------------------------------------
--- Fotoğraflar GitHub deposunda, albüm listesi Albümler/albums.json
--- dosyasından okunur. Geçici GitHub entegrasyonu tabloları temizlenir.
--- -------------------------------------------------------------
 drop table if exists public.photo_albums cascade;
 drop table if exists public.app_settings cascade;
+
+-- Albüm listesi: güncel hali Supabase'de tutulur, Edge Function doldurur.
+-- Fotoğraflar yine GitHub deposunda durur; bu tablo yalnızca meta veridir.
+create table if not exists public.photo_albums (
+  folder text primary key,
+  title text not null,
+  path text not null,
+  cover text not null,
+  photo_count int not null default 0,
+  photos jsonb not null default '[]',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.photo_albums enable row level security;
+
+drop policy if exists "Public read photo_albums" on public.photo_albums;
+create policy "Public read photo_albums"
+  on public.photo_albums for select
+  to anon, authenticated
+  using (true);
+
+revoke insert, update, delete on table public.photo_albums from anon, authenticated;
+grant select on table public.photo_albums to anon, authenticated;

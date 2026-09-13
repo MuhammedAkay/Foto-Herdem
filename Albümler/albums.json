@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T15:22:26.082Z",
+  "generatedAt": "2026-09-13T15:33:05.825Z",
   "albumFolder": "fotoğraflar",
   "albums": [
     {
@@ -24,24 +24,6 @@
         "fotoğraflar/nisan-seansı-2026/01.jpg",
         "fotoğraflar/nisan-seansı-2026/02.jpg",
         "fotoğraflar/nisan-seansı-2026/03.jpg"
-      ]
-    },
-    {
-      "id": "sldldl",
-      "title": "Sldldl",
-      "path": "fotoğraflar/sldldl",
-      "cover": "fotoğraflar/sldldl/46401.webp",
-      "photoCount": 9,
-      "photos": [
-        "fotoğraflar/sldldl/46401.webp",
-        "fotoğraflar/sldldl/46411.webp",
-        "fotoğraflar/sldldl/46648.webp",
-        "fotoğraflar/sldldl/46651.webp",
-        "fotoğraflar/sldldl/46656.webp",
-        "fotoğraflar/sldldl/46659.webp",
-        "fotoğraflar/sldldl/46665.webp",
-        "fotoğraflar/sldldl/46666.webp",
-        "fotoğraflar/sldldl/46667.webp"
       ]
     },
     {

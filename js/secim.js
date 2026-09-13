@@ -2,7 +2,8 @@
   "use strict";
 
   const CONFIG = window.FH_CONFIG || {};
-  const ALBUMS_MANIFEST = "Albümler/albums.json";
+  const ALBUMS_MANIFEST = CONFIG.ALBUMS_URL || "Albümler/albums.json";
+  const PHOTO_BASE = CONFIG.PHOTO_URL || "Albümler/";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -192,17 +193,30 @@
   // ---------- Galeri ----------
 
   async function loadAlbumManifest() {
-    const response = await fetch(ALBUMS_MANIFEST, { cache: "no-store" });
-    if (!response.ok) throw new Error("Albüm listesi okunamadı.");
-    const manifest = await response.json();
-    return manifest.albums || [];
+    const urls = [
+      ALBUMS_MANIFEST,
+      "Albümler/albums.json",
+    ].filter((value, index, all) => all.indexOf(value) === index);
+
+    let lastError = null;
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const manifest = await response.json();
+        return manifest.albums || [];
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw new Error(lastError?.message || "Albüm listesi okunamadı.");
   }
 
   function renderGallery() {
     const gallery = $("#secim-gallery");
     gallery.innerHTML = state.album.photos
       .map((photo, index) => {
-        const url = state.photoUrl.get(photo) || `Albümler/${encodeURI(photo)}`;
+        const url = state.photoUrl.get(photo) || `${PHOTO_BASE}${encodeURI(photo)}`;
         return `
           <figure class="secim-photo" data-photo="${escapeAttr(photo)}" tabindex="0" role="checkbox" aria-checked="false" aria-label="Fotoğraf ${index + 1}">
             <img src="${url}" alt="" loading="lazy">
@@ -284,7 +298,7 @@
     state.lightboxIndex = (index + count) % count;
 
     const photo = photos[state.lightboxIndex];
-    const url = state.photoUrl.get(photo) || `Albümler/${encodeURI(photo)}`;
+    const url = state.photoUrl.get(photo) || `${PHOTO_BASE}${encodeURI(photo)}`;
     const box = $("#secim-lightbox");
     const img = box.querySelector("img");
     img.src = url;
@@ -367,7 +381,7 @@
 
       state.photoUrl = new Map();
       state.album.photos.forEach((photo) => {
-        state.photoUrl.set(photo, `Albümler/${encodeURI(photo)}`);
+        state.photoUrl.set(photo, `${PHOTO_BASE}${encodeURI(photo)}`);
       });
 
       enterPicker(result);

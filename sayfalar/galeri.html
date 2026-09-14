@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Foto Herdem galerisinde Mardin, Midyat ve çevresindeki düğün, nişan ve dış çekim örneklerini inceleyin.">
-  <meta name="keywords" content="Foto Herdem galeri, Mardin fotoğraf galeri, Midyat düğün fotoğrafları, dış çekim örnekleri, nişan fotoğrafı">
+  <meta name="description" content="Foto Herdem galerisinde düğün, nişan, kına, gelin & damat ve özel gün çekimlerine ait kategorili örnek fotoğrafları inceleyin.">
+  <meta name="keywords" content="Foto Herdem galeri, Mardin fotoğraf galeri, Midyat düğün fotoğrafları, nişan fotoğrafı, kına gecesi fotoğrafı, gelin damat çekimi, doğum günü çekimi, özel gün fotoğrafı">
   <meta name="robots" content="index,follow">
   <title>Galeri | Foto Herdem | Mardin Midyat Fotoğraf Örnekleri</title>
   <meta name="theme-color" content="#8d5c3b">
@@ -18,17 +18,18 @@
   <meta property="og:locale" content="tr_TR">
   <meta property="og:site_name" content="Foto Herdem">
   <meta property="og:title" content="Galeri | Foto Herdem | Mardin Midyat Fotoğraf Örnekleri">
-  <meta property="og:description" content="Foto Herdem galerisinde Mardin, Midyat ve çevresindeki düğün, nişan ve dış çekim örneklerini inceleyin.">
+  <meta property="og:description" content="Foto Herdem galerisinde düğün, nişan, kına, gelin & damat ve özel gün çekimlerine ait kategorili örnek fotoğrafları inceleyin.">
   <meta property="og:url" content="https://fotoherdem.wasmer.app/sayfalar/galeri.html">
   <meta property="og:image" content="https://fotoherdem.wasmer.app/assets/logo.webp">
   <meta property="og:image:width" content="1024">
   <meta property="og:image:height" content="1024">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Galeri | Foto Herdem | Mardin Midyat Fotoğraf Örnekleri">
-  <meta name="twitter:description" content="Foto Herdem galerisinde Mardin, Midyat ve çevresindeki düğün, nişan ve dış çekim örneklerini inceleyin.">
+  <meta name="twitter:description" content="Foto Herdem galerisinde düğün, nişan, kına, gelin & damat ve özel gün çekimlerine ait kategorili örnek fotoğrafları inceleyin.">
   <meta name="twitter:image" content="https://fotoherdem.wasmer.app/assets/logo.webp">
   <link rel="stylesheet" href="../css/style.css">
   <script defer src="../js/main.js"></script>
+  <script defer src="../js/galeri.js"></script>
   <script defer src="../js/analytics.js"></script>
   <script defer src="../js/cookie-consent.js"></script>
 </head>
@@ -59,7 +60,8 @@
           <div class="eyebrow">Seçili Kareler</div>
           <h1>Galeri</h1>
           <p>
-            Burada farklı çekimlerden derlenmiş örnek kareler yer alıyor.
+            Düğün, nişan, kına ve özel gün çekimlerinden derlenmiş örnek kareler.
+            Paketlere göre hazırlanmış kategorileri keşfedin.
           </p>
           <div class="breadcrumbs">
             <a href="../index.html">Ana Sayfa</a> / Galeri
@@ -70,55 +72,142 @@
 
     <section class="section">
       <div class="container">
-        <div class="gallery-stack">
-          <figure class="gallery-item featured">
-            <img src="../assets/dis-cekim-10.webp" alt="Düğün çiftinden özel bir an">
+        <div class="section-head">
+          <div>
+            <div class="section-title-row">
+              <span class="section-icon" aria-hidden="true">✦</span>
+              <h2 class="section-title">Kategorilere Göre Keşfedin</h2>
+            </div>
+            <p class="section-lead">
+              Örnek kareler paketlere göre gruplandı. Bir kategori seçin, size özel seçkiyi görün.
+            </p>
+          </div>
+        </div>
+
+        <div class="gallery-filters" role="tablist" aria-label="Galeri kategorileri">
+          <button type="button" class="gallery-filter active" data-filter="all" role="tab" aria-selected="true">Tümü</button>
+          <button type="button" class="gallery-filter" data-filter="dugun" role="tab" aria-selected="false">Düğün</button>
+          <button type="button" class="gallery-filter" data-filter="nisan" role="tab" aria-selected="false">Nişan & Söz</button>
+          <button type="button" class="gallery-filter" data-filter="kina" role="tab" aria-selected="false">Kına Gecesi</button>
+          <button type="button" class="gallery-filter" data-filter="gelin" role="tab" aria-selected="false">Gelin & Damat</button>
+          <button type="button" class="gallery-filter" data-filter="ozel" role="tab" aria-selected="false">Özel Günler</button>
+        </div>
+
+        <!--
+          Yeni fotoğraf eklemek için:
+          1. Fotoğrafı assets/ klasörüne webp olarak yükleyin (ör. assets/galeri-dogum-gunu-1.webp)
+          2. Aşağıya bir <figure class="gallery-card" data-category="..."> bloğu ekleyin.
+          Kategori değerleri: dugun | nisan | kina | gelin | ozel
+        -->
+        <div class="gallery-grid" id="gallery-grid">
+          <figure class="gallery-card" data-category="dugun">
+            <img src="../assets/dis-cekim-10.webp" alt="Düğün çiftinden özel bir an" loading="lazy">
             <figcaption class="overlay">
               <strong>Sonsuz Bir Hikâye</strong>
-              <span>En özel anlar, en doğal halleriyle saklanır.</span>
+              <span>Düğün · En özel anlar en doğal halleriyle saklanır.</span>
             </figcaption>
           </figure>
 
-          <div class="gallery-row gallery-row-3">
-            <figure class="gallery-item">
-              <img src="../assets/dis-cekim-8.webp" alt="Çift portresi">
-              <figcaption class="overlay">
-                <strong>Mutluluğun Karesi</strong>
-                <span>Gerçek duygular, zamansız hatıralara dönüşür.</span>
-              </figcaption>
-            </figure>
-            <figure class="gallery-item">
-              <img src="../assets/dis-cekim-9.webp" alt="Romantik dış çekim">
-              <figcaption class="overlay">
-                <strong>Zarif Dokunuşlar</strong>
-                <span>Güzelliğinizi yansıtan özel kareler.</span>
-              </figcaption>
-            </figure>
-            <figure class="gallery-item">
-              <img src="../assets/dis-cekim-5.webp" alt="Albüm hazırlığı">
-              <figcaption class="overlay">
-                <strong>Masalsı Bir Yolculuk</strong>
-                <span>Tarihin dokusunda unutulmaz anılar.</span>
-              </figcaption>
-            </figure>
-          </div>
+          <figure class="gallery-card" data-category="nisan">
+            <img src="../assets/dis-cekim-2.webp" alt="Neşeli çift portresi" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Neşeli Bir Başlangıç</strong>
+              <span>Nişan & Söz · Havalı ve eğlenceli bir an.</span>
+            </figcaption>
+          </figure>
 
-          <div class="gallery-row gallery-row-2">
-            <figure class="gallery-item">
-              <img src="../assets/dis-cekim-7.webp" alt="Düğün kutlaması">
-              <figcaption class="overlay">
-                <strong>Yeni Bir Başlangıç</strong>
-                <span>Hayatınızın en değerli günü unutulmaz kalsın.</span>
-              </figcaption>
-            </figure>
-            <figure class="gallery-item">
-              <img src="../assets/dis-cekim-3.webp" alt="Albüm detayları">
-              <figcaption class="overlay">
-                <strong>Kına Portresi</strong>
-                <span>Cesur renkler ve güçlü bir dış çekim havası.</span>
-              </figcaption>
-            </figure>
-          </div>
+          <figure class="gallery-card" data-category="kina">
+            <img src="../assets/dis-cekim-3.webp" alt="Kına gecesi portresi" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Kına Portresi</strong>
+              <span>Kına Gecesi · Cesur renkler ve güçlü bir hava.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="gelin">
+            <img src="../assets/dis-cekim-8.webp" alt="Çift portresi" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Mutluluğun Karesi</strong>
+              <span>Gelin & Damat · Gerçek duygular, zamansız hatıralar.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="dugun">
+            <img src="../assets/dis-cekim-7.webp" alt="Düğün kutlaması" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Yeni Bir Başlangıç</strong>
+              <span>Düğün · Hayatınızın en değerli günü unutulmaz kalsın.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="nisan">
+            <img src="../assets/dis-cekim-4.webp" alt="Karizmatik portre" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Zarafet</strong>
+              <span>Nişan & Söz · Karizmatik ve şık bir kare.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="kina">
+            <img src="../assets/dis-cekim-5.webp" alt="Tarihi sokakta kına çekimi" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Tarihi Dokunuş</strong>
+              <span>Kına Gecesi · Kraliçe ve JÖN, tarihi sokakta.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="gelin">
+            <img src="../assets/dis-cekim-9.webp" alt="Romantik dış çekim" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Zarif Dokunuşlar</strong>
+              <span>Gelin & Damat · Güzelliğinizi yansıtan özel kareler.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="nisan">
+            <img src="../assets/dis-cekim-6.webp" alt="Yüzük ve detay çekimi" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Detayların Hikâyesi</strong>
+              <span>Nişan & Söz · Küçük ayrıntılar büyük duygular.</span>
+            </figcaption>
+          </figure>
+
+          <figure class="gallery-card" data-category="dugun">
+            <img src="../assets/dis-cekim-1.webp" alt="Masalsı gelinlik ve damat" loading="lazy">
+            <figcaption class="overlay">
+              <strong>Masalsı Bir An</strong>
+              <span>Düğün · Klasik şıklık, doğal bir sahne.</span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="gallery-grid" id="gallery-placeholders" hidden>
+          <article class="gallery-card empty">
+            <div class="empty-inner">
+              <span class="empty-icon" aria-hidden="true">🎂</span>
+              <h3>Doğum Günü</h3>
+              <p>Bu kategoriye örnek kareler yüklendikçe eklenecek. Pastadan misafirlere her anı fotoğraflıyoruz.</p>
+              <a class="btn btn-dark btn-sm" href="./iletisim.html">Numune İste</a>
+            </div>
+          </article>
+
+          <article class="gallery-card empty">
+            <div class="empty-inner">
+              <span class="empty-icon" aria-hidden="true">🎈</span>
+              <h3>Baby Shower</h3>
+              <p>Süsleme, aile ve kutlama kareleri için konsepte uygun bir çekim planlıyoruz.</p>
+              <a class="btn btn-dark btn-sm" href="./iletisim.html">Numune İste</a>
+            </div>
+          </article>
+
+          <article class="gallery-card empty">
+            <div class="empty-inner">
+              <span class="empty-icon" aria-hidden="true">🎓</span>
+              <h3>Mezuniyet</h3>
+              <p>Bu büyük günün gururunu en doğal haliyle karelere dönüştürüyoruz.</p>
+              <a class="btn btn-dark btn-sm" href="./iletisim.html">Numune İste</a>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -134,5 +223,15 @@
       </div>
     </div>
   </footer>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lightbox-close" data-lightbox-close aria-label="Galeriyi kapat">✕</button>
+    <button type="button" class="lightbox-nav lightbox-prev" data-lightbox-prev aria-label="Önceki fotoğraf">‹</button>
+    <figure class="lightbox-content">
+      <img id="lightbox-img" src="" alt="">
+      <figcaption id="lightbox-caption"></figcaption>
+    </figure>
+    <button type="button" class="lightbox-nav lightbox-next" data-lightbox-next aria-label="Sonraki fotoğraf">›</button>
+  </div>
 </body>
 </html>

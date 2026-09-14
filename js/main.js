@@ -1,4 +1,55 @@
 document.addEventListener("DOMContentLoaded", () => {
+  /* ---- Tema (açık / karanlık) ---- */
+  const themeToggle = document.querySelector("[data-theme-toggle]");
+  const themeStorageKey = "fh-theme";
+
+  const getSystemTheme = () =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+  const updateThemeUI = (theme) => {
+    const isDark = theme === "dark";
+
+    if (themeToggle) {
+      const icon = themeToggle.querySelector(".theme-toggle-icon");
+      themeToggle.setAttribute("aria-label", isDark ? "Açık moda geç" : "Karanlık moda geç");
+      themeToggle.setAttribute("title", isDark ? "Açık moda geç" : "Karanlık moda geç");
+      if (icon) icon.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute("content", isDark ? "#14100c" : "#8d5c3b");
+  };
+
+  const applyTheme = (theme, persist) => {
+    document.documentElement.dataset.theme = theme;
+    if (persist) {
+      try { localStorage.setItem(themeStorageKey, theme); } catch (e) { /* gizli mod: yoksay */ }
+    }
+    updateThemeUI(theme);
+  };
+
+  if (themeToggle) {
+    updateThemeUI(document.documentElement.dataset.theme || getSystemTheme());
+
+    themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(next, true);
+    });
+  }
+
+  const systemDarkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const onSystemThemeChange = (event) => {
+    let saved = null;
+    try { saved = localStorage.getItem(themeStorageKey); } catch (e) { /* yoksay */ }
+    if (saved === "light" || saved === "dark") return;
+    applyTheme(event.matches ? "dark" : "light", false);
+  };
+  if (typeof systemDarkQuery.addEventListener === "function") {
+    systemDarkQuery.addEventListener("change", onSystemThemeChange);
+  } else if (typeof systemDarkQuery.addListener === "function") {
+    systemDarkQuery.addListener(onSystemThemeChange);
+  }
+
   const navToggle = document.querySelector("[data-nav-toggle]");
   const navLinks = document.querySelector("[data-nav-links]");
   const yearNodes = document.querySelectorAll("[data-year]");

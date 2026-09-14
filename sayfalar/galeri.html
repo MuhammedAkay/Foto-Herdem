@@ -27,6 +27,19 @@
   <meta name="twitter:title" content="Galeri | Foto Herdem | Mardin Midyat Fotoğraf Örnekleri">
   <meta name="twitter:description" content="Foto Herdem galerisinde düğün, nişan, kına, gelin & damat ve özel gün çekimlerine ait kategorili örnek fotoğrafları inceleyin.">
   <meta name="twitter:image" content="https://fotoherdem.wasmer.app/assets/logo.webp">
+  <!-- Tema ön yükleme: sayfa açılışında yanıp sönmeyi (FOUC) önler -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("fh-theme");
+        var dark = saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
+
   <link rel="stylesheet" href="../css/style.css">
   <script defer src="../js/main.js"></script>
   <script defer src="../js/galeri.js"></script>
@@ -40,9 +53,6 @@
         <img class="brand-logo" src="../assets/logo.webp" alt="" aria-hidden="true">
         <span>Foto Herdem</span>
       </a>
-      <button class="nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false">
-        <span></span>
-      </button>
       <ul class="nav-links" data-nav-links>
         <li><a href="../index.html">Ana Sayfa</a></li>
         <li><a href="./galeri.html">Galeri</a></li>
@@ -50,6 +60,14 @@
         <li><a href="./paketler.html">Paketler</a></li>
         <li><a href="./iletisim.html">İletişim</a></li>
       </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Karanlık moda geç" title="Tema değiştir">
+          <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+        </button>
+        <button class="nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false">
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
 

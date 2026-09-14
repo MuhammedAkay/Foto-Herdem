@@ -17,7 +17,7 @@
 .error-page .site-header { position: relative; z-index: 5; }
 
 .error-home-link {
-  margin-left: auto;
+  margin-left: 0;
   min-height: 40px;
   padding: 0 18px;
   font-size: .88rem;

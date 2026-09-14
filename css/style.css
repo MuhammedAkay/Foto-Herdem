@@ -1796,3 +1796,21 @@ main {
 [data-theme="dark"] .form-status {
   color: #eab98f;
 }
+
+[data-theme="dark"] .btn-dark {
+  background: #2a211b;
+  border: 1px solid rgba(241, 231, 223, 0.14);
+  color: #f3ece4;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .btn-dark:hover {
+  background: #352a22;
+  border-color: rgba(210, 154, 110, 0.35);
+}
+
+[data-theme="dark"] .gallery-filter.active {
+  background: #b37a52;
+  border-color: #b37a52;
+  color: #fff;
+}

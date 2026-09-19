@@ -244,14 +244,14 @@ select {
 
 .hero-inner {
   display: grid;
-  grid-template-columns: minmax(420px, 0.92fr) minmax(620px, 1.08fr);
-  gap: 72px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: clamp(32px, 4vw, 56px);
   align-items: center;
   padding: 84px 0 92px;
 }
 
 .hero-copy {
-  max-width: 440px;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -1032,18 +1032,17 @@ main {
 
 @media (min-width: 961px) {
   .hero-inner {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 72px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: center;
+    gap: clamp(32px, 4vw, 56px);
   }
 
   .hero-copy {
-    flex: 0 0 420px;
-    max-width: 420px;
+    max-width: 100%;
     justify-self: start;
     margin-left: 0;
-    padding-top: 24px;
+    padding-top: 0;
   }
 
   .hero-copy .eyebrow,
@@ -1055,19 +1054,21 @@ main {
   }
 
   .hero-card {
-    flex: 1 1 0;
-    max-width: 820px;
+    width: 100%;
+    max-width: 100%;
     justify-self: end;
-    margin-left: auto;
+    margin-left: 0;
     margin-top: 0;
   }
 
   .hero-card img {
-    height: 520px;
+    height: 380px;
+    object-fit: cover;
   }
 
   .hero-card-grid img {
-    height: 180px;
+    height: 130px;
+    object-fit: cover;
   }
 }
 
